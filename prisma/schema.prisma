@@ -1,0 +1,40 @@
+// DemoForge Prisma Schema
+// Prisma 7: connection URL is configured in prisma.config.ts, not here.
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model DemoProject {
+  id             String   @id @default(cuid())
+  userId         String
+  projectName    String
+  tagline        String   @default("")
+  description    String   @default("")
+  /// "url" | "screenshots" | "repo+url" | "repo+screenshots"
+  sourceType     String   @default("screenshots")
+  sourceUrl      String?
+  /// string[] — Supabase Storage public URLs
+  screenshotUrls Json     @default("[]")
+  /// "clean" | "cyber" | "playful"
+  stylePreset    String   @default("clean")
+  /// { title: string; description: string }[]
+  features       Json     @default("[]")
+  /// CodeSummary JSON — populated by analyze-repo
+  codeSummary    Json?
+  /// DemoConfig JSON — populated by generate-config
+  demoConfig     Json?
+  /// "draft" | "config_generated" | "rendering" | "ready" | "failed"
+  renderStatus   String   @default("draft")
+  videoUrl       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@map("demo_projects")
+}
