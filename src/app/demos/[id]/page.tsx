@@ -4,6 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { StatusBadge } from "@/components/StatusBadge";
 import { RepoPanel } from "@/components/RepoPanel";
+import { OutlinePanel } from "@/components/OutlinePanel";
 import type { DemoProject, RenderStatus } from "@/types";
 import Link from "next/link";
 
@@ -93,8 +94,8 @@ export default async function DemoDetailPage({ params }: RouteProps) {
           {/* Repo analysis */}
           <RepoPanelSection demo={demo} />
 
-          {/* Generate outline — Slice 4 */}
-          <OutlinePanel demo={demo} />
+          {/* Generate outline */}
+          <OutlinePanelSection demo={demo} />
 
           {/* Render — Slice 6 */}
           <RenderPanel demo={demo} />
@@ -199,55 +200,28 @@ function RepoPanelSection({ demo }: { demo: DemoProject }) {
   );
 }
 
-// ─── Outline Panel (Slice 4 placeholder) ─────────────────────────────────────
+// ─── Outline Panel (wired to OutlinePanel client component) ──────────────────
 
-function OutlinePanel({ demo }: { demo: DemoProject }) {
-  const canGenerate =
-    demo.screenshotUrls.length > 0 ||
-    demo.sourceUrl ||
-    demo.codeSummary;
-
-  const hasConfig = !!demo.demoConfig;
+function OutlinePanelSection({ demo }: { demo: DemoProject }) {
+  const canGenerate = Boolean(
+    demo.screenshotUrls.length > 0 || demo.sourceUrl || demo.codeSummary
+  );
 
   return (
     <section className="glass-card p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="font-display text-lg font-bold">Demo Outline</h2>
-          <p className="text-muted-fg text-xs font-mono">
-            {hasConfig
-              ? "Claude generated a scene-by-scene outline."
-              : "Claude will write a scene plan from your project info."}
-          </p>
-        </div>
-        {!hasConfig && (
-          <button
-            className="btn-primary opacity-50 cursor-not-allowed text-sm"
-            disabled
-            title="Coming in Slice 4"
-          >
-            Generate Outline
-          </button>
-        )}
+      <div className="mb-4">
+        <h2 className="font-display text-lg font-bold">Demo Outline</h2>
+        <p className="text-muted-fg text-xs font-mono">
+          {demo.demoConfig
+            ? "Scene-by-scene outline — click any text to edit, drag to reorder."
+            : "Claude will write a scene plan from your project info."}
+        </p>
       </div>
-
-      {hasConfig && demo.demoConfig ? (
-        <div className="rounded-lg bg-muted/30 border border-border p-4 text-xs font-mono text-muted-fg">
-          {demo.demoConfig.scenes.length} scenes · {demo.demoConfig.title}
-        </div>
-      ) : (
-        <div className="rounded-lg border border-dashed border-border p-6 text-center">
-          <p className="text-muted-fg text-sm font-mono">
-            {/* TODO (Slice 4): Generate config UI */}
-            Outline generation — coming in Slice 4
-          </p>
-          {!canGenerate && (
-            <p className="text-muted-fg text-xs font-mono mt-1 opacity-60">
-              Add screenshots or a URL first
-            </p>
-          )}
-        </div>
-      )}
+      <OutlinePanel
+        demoId={demo.id}
+        demoConfig={demo.demoConfig}
+        canGenerate={canGenerate}
+      />
     </section>
   );
 }
