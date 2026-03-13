@@ -1,20 +1,29 @@
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { Nav } from "@/components/Nav";
+import { NewDemoWizard } from "./NewDemoWizard";
+
 /**
- * /demos/new — 3-step wizard to create a new demo project.
- * TODO (Slice 2): Build full wizard UI (name/tagline, screenshots, style preset).
+ * /demos/new — 3-step wizard to create a new DemoProject.
+ * Redirects unauthenticated users to /login.
  */
-export default function NewDemoPage() {
+export default async function NewDemoPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="glass-card w-full max-w-2xl p-10 animate-scale-in">
-        <h1 className="font-display text-3xl font-bold mb-2">New Demo</h1>
-        <p className="text-muted-fg text-sm font-mono mb-8">
-          3-step wizard — coming in Slice 2
-        </p>
-        {/* TODO (Slice 2): Step indicator + wizard steps */}
-        <div className="h-32 rounded-lg border border-dashed border-border flex items-center justify-center">
-          <span className="text-muted-fg text-xs font-mono">Wizard placeholder</span>
+    <div className="min-h-screen flex flex-col">
+      <Nav />
+      <main className="flex-1 px-6 py-12">
+        <div className="max-w-2xl mx-auto mb-8">
+          <h1 className="font-display text-3xl font-bold mb-1">New Demo</h1>
+          <p className="text-muted-fg text-sm font-mono">
+            Turn your project into a polished video demo.
+          </p>
         </div>
-      </div>
-    </main>
+        <NewDemoWizard />
+      </main>
+    </div>
   );
 }

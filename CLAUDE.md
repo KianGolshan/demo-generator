@@ -166,8 +166,8 @@ See `.env.example` for all keys. Required:
 
 ## Completed Slices
 
-- [ ] Slice 1 — Project scaffold + data layer
-- [ ] Slice 2 — Auth + project creation
+- [x] Slice 1 — Project scaffold + data layer
+- [x] Slice 2 — Auth + project creation
 - [ ] Slice 3 — Repo analysis pipeline
 - [ ] Slice 4 — Claude demo config generation
 - [ ] Slice 5 — Remotion video engine
@@ -175,6 +175,15 @@ See `.env.example` for all keys. Required:
 - [ ] Slice 7 — Dashboard + polish
 
 ---
+
+## Key Implementation Notes
+
+- **Supabase Storage setup required:** Before screenshots upload works, create two buckets in Supabase Storage dashboard: `screenshots` (public read) and `videos` (private). The admin client uses `SUPABASE_SERVICE_ROLE_KEY` for uploads.
+- **Prisma Json cast pattern:** Prisma returns `JsonValue` which can't be directly cast to typed interfaces. Must cast through `unknown` first: `raw.field as unknown as MyType`.
+- **Prisma 7 breaking changes:** The `url`/`directUrl` properties moved out of `schema.prisma` into `prisma.config.ts`. Runtime adapter (`PrismaPg`) is instantiated in `src/lib/prisma.ts`. CLI operations use `prisma.config.ts` with just the `url` property.
+- **`@prisma/adapter-pg` bundles its own `@types/pg`** — do NOT install `@types/pg` separately, causes type conflicts.
+- **Zod v4:** `z.record()` now requires two arguments: `z.record(z.string(), valueSchema)`.
+- **Next.js 14 config:** `serverExternalPackages` is `experimental.serverComponentsExternalPackages` in v14 (renamed in v15).
 
 ## Open Questions / Assumptions
 
