@@ -1,0 +1,63 @@
+import Anthropic from "@anthropic-ai/sdk";
+
+/**
+ * Anthropic client singleton.
+ * All Claude API calls go through this instance.
+ */
+const globalForAnthropic = globalThis as unknown as {
+  anthropic: Anthropic | undefined;
+};
+
+export const anthropic =
+  globalForAnthropic.anthropic ??
+  new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForAnthropic.anthropic = anthropic;
+}
+
+/**
+ * Calls the Claude API and returns the raw text response.
+ * Logs token usage and latency to console in development.
+ *
+ * @param params.system  - System prompt establishing Claude's role.
+ * @param params.user    - User message (the actual prompt content).
+ * @param params.model   - Model ID. Defaults to claude-sonnet-4-6.
+ * @param params.maxTokens - Max tokens for the response.
+ * @returns The text content of Claude's first response message.
+ */
+export async function callClaude({
+  system,
+  user,
+  model = "claude-sonnet-4-6",
+  maxTokens = 2000,
+}: {
+  system: string;
+  user: string;
+  model?: string;
+  maxTokens?: number;
+}): Promise<string> {
+  const start = Date.now();
+
+  const message = await anthropic.messages.create({
+    model,
+    max_tokens: maxTokens,
+    system,
+    messages: [{ role: "user", content: user }],
+  });
+
+  const latencyMs = Date.now() - start;
+
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      `[claude] model=${model} input_tokens=${message.usage.input_tokens} output_tokens=${message.usage.output_tokens} latency=${latencyMs}ms`
+    );
+  }
+
+  const block = message.content[0];
+  if (block.type !== "text") {
+    throw new Error(`Unexpected Claude response type: ${block.type}`);
+  }
+
+  return block.text;
+}

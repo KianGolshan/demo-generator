@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { StatusBadge } from "@/components/StatusBadge";
+import { RepoPanel } from "@/components/RepoPanel";
 import type { DemoProject, RenderStatus } from "@/types";
 import Link from "next/link";
 
@@ -89,8 +90,8 @@ export default async function DemoDetailPage({ params }: RouteProps) {
             <ScreenshotsPanel urls={demo.screenshotUrls} />
           )}
 
-          {/* Repo analysis — Slice 3 */}
-          <RepoPanel demo={demo} />
+          {/* Repo analysis */}
+          <RepoPanelSection demo={demo} />
 
           {/* Generate outline — Slice 4 */}
           <OutlinePanel demo={demo} />
@@ -176,10 +177,9 @@ function ScreenshotsPanel({ urls }: { urls: string[] }) {
   );
 }
 
-// ─── Repo Panel (Slice 3 placeholder) ────────────────────────────────────────
+// ─── Repo Panel (wired to RepoPanel client component) ────────────────────────
 
-function RepoPanel({ demo }: { demo: DemoProject }) {
-  const hasRepo = demo.sourceType.includes("repo");
+function RepoPanelSection({ demo }: { demo: DemoProject }) {
   const hasAnalysis = !!demo.codeSummary;
 
   return (
@@ -188,63 +188,14 @@ function RepoPanel({ demo }: { demo: DemoProject }) {
       <p className="text-muted-fg text-xs font-mono mb-4">
         {hasAnalysis
           ? "Analysis complete — Claude read your codebase."
-          : hasRepo
-          ? "Connect your GitHub repo to let Claude analyze your stack and routes."
-          : "Add a GitHub repo to your project to enable deep analysis."}
+          : "Paste a GitHub repo to let Claude analyze your stack, routes, and features."}
       </p>
-
-      {hasAnalysis && demo.codeSummary ? (
-        <CodeSummaryDisplay summary={demo.codeSummary} />
-      ) : (
-        <div className="rounded-lg border border-dashed border-border p-6 text-center">
-          <p className="text-muted-fg text-sm font-mono">
-            {/* TODO (Slice 3): Connect Repo UI */}
-            Repo connect panel — coming in Slice 3
-          </p>
-        </div>
-      )}
+      <RepoPanel
+        demoId={demo.id}
+        codeSummary={demo.codeSummary}
+        hasRepoSourceType={demo.sourceType.includes("repo")}
+      />
     </section>
-  );
-}
-
-function CodeSummaryDisplay({ summary }: { summary: DemoProject["codeSummary"] }) {
-  if (!summary) return null;
-  return (
-    <div className="space-y-3 text-sm font-mono">
-      <div className="flex flex-wrap gap-2">
-        {summary.stack.frontend && <Chip label="Frontend" value={summary.stack.frontend} />}
-        {summary.stack.backend && <Chip label="Backend" value={summary.stack.backend} />}
-        {summary.stack.databases?.map((db) => (
-          <Chip key={db} label="DB" value={db} />
-        ))}
-        {summary.stack.aiProviders?.map((ai) => (
-          <Chip key={ai} label="AI" value={ai} color="accent" />
-        ))}
-      </div>
-      {summary.features.length > 0 && (
-        <div>
-          <div className="text-muted-fg text-xs mb-1">Features detected</div>
-          <ul className="space-y-1">
-            {summary.features.map((f, i) => (
-              <li key={i} className="flex gap-2 text-xs">
-                <span className="text-accent">›</span>
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Chip({ label, value, color = "default" }: { label: string; value: string; color?: string }) {
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-mono
-      ${color === "accent" ? "border-accent/30 bg-accent/10 text-accent" : "border-border bg-muted text-muted-fg"}`}>
-      <span className="opacity-60">{label}:</span>
-      <span className="text-foreground">{value}</span>
-    </span>
   );
 }
 

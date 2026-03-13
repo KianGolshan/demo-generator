@@ -168,7 +168,7 @@ See `.env.example` for all keys. Required:
 
 - [x] Slice 1 — Project scaffold + data layer
 - [x] Slice 2 — Auth + project creation
-- [ ] Slice 3 — Repo analysis pipeline
+- [x] Slice 3 — Repo analysis pipeline
 - [ ] Slice 4 — Claude demo config generation
 - [ ] Slice 5 — Remotion video engine
 - [ ] Slice 6 — Render orchestration
@@ -178,6 +178,7 @@ See `.env.example` for all keys. Required:
 
 ## Key Implementation Notes
 
+- **GitHub provider_token:** Available in `supabase.auth.getSession().session.provider_token` when user signed in with GitHub OAuth. Pass as the Octokit auth token. Will be `undefined` if user used magic link — Octokit falls back to unauthenticated (60 req/hr limit) for public repos.
 - **Supabase Storage setup required:** Before screenshots upload works, create two buckets in Supabase Storage dashboard: `screenshots` (public read) and `videos` (private). The admin client uses `SUPABASE_SERVICE_ROLE_KEY` for uploads.
 - **Prisma Json cast pattern:** Prisma returns `JsonValue` which can't be directly cast to typed interfaces. Must cast through `unknown` first: `raw.field as unknown as MyType`.
 - **Prisma 7 breaking changes:** The `url`/`directUrl` properties moved out of `schema.prisma` into `prisma.config.ts`. Runtime adapter (`PrismaPg`) is instantiated in `src/lib/prisma.ts`. CLI operations use `prisma.config.ts` with just the `url` property.
