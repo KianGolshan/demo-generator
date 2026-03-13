@@ -79,7 +79,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         continue; // silently skip oversized files
       }
 
-      const ext = file.name.split(".").pop() ?? "png";
+      const nameParts = file.name.split(".");
+      const extFromName = nameParts.length > 1 ? nameParts.pop()! : null;
+      const extFromMime: Record<string, string> = {
+        "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png",
+        "image/webp": "webp", "image/gif": "gif", "image/avif": "avif",
+      };
+      const ext = extFromName ?? extFromMime[file.type] ?? "png";
       const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const storagePath = `${user.id}/${id}/${filename}`;
 

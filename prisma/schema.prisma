@@ -23,6 +23,8 @@ model DemoProject {
   screenshotUrls Json     @default("[]")
   /// "clean" | "cyber" | "playful"
   stylePreset    String   @default("clean")
+  /// "16:9" | "9:16"
+  aspectRatio    String   @default("16:9")
   /// { title: string; description: string }[]
   features       Json     @default("[]")
   /// CodeSummary JSON — populated by analyze-repo

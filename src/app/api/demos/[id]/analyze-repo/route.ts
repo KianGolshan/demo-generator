@@ -19,7 +19,18 @@ const ROUTE_PATTERNS = [
   /index\.(js|ts|jsx|tsx)$/i,
 ];
 
-/** Import patterns that indicate AI/LLM usage */
+/**
+ * Filename patterns that hint at AI/LLM usage.
+ * These match against file paths (not content) during the initial scoring pass.
+ * Content-level import detection happens in scoreFileContent() after fetching.
+ */
+const AI_FILENAME_PATTERNS = [
+  /\b(openai|anthropic|claude|gpt|llm|langchain|pinecone|cohere|replicate|huggingface)\b/i,
+  /\bai[_-]?(lib|helper|client|service|utils?)\b/i,
+  /\b(chat|embed|vector|rag)\b/i,
+];
+
+/** Import patterns that indicate AI/LLM usage — checked against file content after fetch */
 const AI_IMPORT_PATTERNS = [
   /from ['"]openai['"]/,
   /from ['"]@anthropic-ai/,
@@ -94,21 +105,19 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   try {
     const { id } = await params;
 
-    // Auth
+    // Auth — getUser() re-validates the JWT with Supabase's server (secure)
     const supabase = await createClient();
-    const {
-      data: { session },
-      error: authError,
-    } = await supabase.auth.getSession();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !session) {
+    if (authError || !user) {
       return NextResponse.json<ApiError>(
         { error: "Unauthorized", code: "UNAUTHORIZED" },
         { status: 401 }
       );
     }
 
-    const user = session.user;
+    // Get provider_token separately — only available in session, not getUser()
+    const { data: { session } } = await supabase.auth.getSession();
 
     // Verify demo ownership
     const demo = await prisma.demoProject.findFirst({
@@ -136,9 +145,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     const { repoFullName } = parsed.data;
     const [owner, repo] = repoFullName.split("/");
 
-    // Get GitHub OAuth token from Supabase session
-    // provider_token is set when user signed in with GitHub OAuth
-    const githubToken = session.provider_token ?? undefined;
+    // Get GitHub OAuth token — provider_token is set when user signed in with GitHub OAuth
+    const githubToken = session?.provider_token ?? undefined;
 
     const octokit = new Octokit({ auth: githubToken });
 
@@ -180,12 +188,14 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     const interestingFiles = scoreAndRank(candidates).slice(0, MAX_FILES_TO_FETCH);
 
     // 3. Fetch file contents in parallel (max 20)
-    const fileContents = await fetchFileContents(
-      octokit,
-      owner,
-      repo,
-      interestingFiles
-    );
+    const rawContents = await fetchFileContents(octokit, owner, repo, interestingFiles);
+
+    // Re-sort by content-level AI import presence (boost AI files to top)
+    const fileContents = rawContents.sort((a, b) => {
+      const aHasAI = AI_IMPORT_PATTERNS.some((r) => r.test(a.content)) ? 1 : 0;
+      const bHasAI = AI_IMPORT_PATTERNS.some((r) => r.test(b.content)) ? 1 : 0;
+      return bHasAI - aHasAI;
+    });
 
     // 4. Build the Claude prompt
     const userPrompt = buildPrompt(repoFullName, fileContents);
@@ -267,8 +277,8 @@ function scoreAndRank(
       // API routes
       if (p.includes("/api/")) score += 8;
 
-      // Files whose name hints at AI usage (content-level check via AI_IMPORT_PATTERNS happens post-fetch)
-      if (AI_IMPORT_PATTERNS.some((r) => r.test(p))) score += 12;
+      // Files whose name hints at AI usage (filename-based heuristic)
+      if (AI_FILENAME_PATTERNS.some((r) => r.test(p))) score += 12;
 
       // Component files
       if (p.includes("/component")) score += 4;

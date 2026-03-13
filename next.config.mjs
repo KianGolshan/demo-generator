@@ -3,6 +3,8 @@ const nextConfig = {
   // Mark all Remotion packages as server-external so Next.js webpack doesn't
   // try to bundle them (they include native binaries + Node-only APIs).
   experimental: {
+    // Next.js 14 key for server-side external packages
+    // (renamed to serverExternalPackages in Next.js 15)
     serverComponentsExternalPackages: [
       "@remotion/renderer",
       "@remotion/bundler",

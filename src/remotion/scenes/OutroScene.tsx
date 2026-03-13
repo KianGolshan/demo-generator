@@ -67,7 +67,7 @@ export const OutroScene: React.FC<OutroSceneProps> = ({
       {/* Deep radial gradient background */}
       <AbsoluteFill
         style={{
-          background: `radial-gradient(ellipse 100% 80% at 50% 50%, ${theme.accentSoft.replace("0.15", "0.25")} 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse 100% 80% at 50% 50%, ${theme.accentSoft.replace(/[\d.]+\)$/, "0.25)")} 0%, transparent 70%)`,
           opacity: glowOpacity * 2,
         }}
       />

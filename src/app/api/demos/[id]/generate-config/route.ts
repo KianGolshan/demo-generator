@@ -122,6 +122,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
       tagline:      raw.tagline,
       description:  raw.description,
       stylePreset:  raw.stylePreset,
+      aspectRatio:  raw.aspectRatio,
       features,
       codeSummary,
       screenshots:  screenshotsForPrompt,
@@ -184,6 +185,7 @@ function buildGenerationPrompt(args: {
   tagline:      string;
   description:  string;
   stylePreset:  string;
+  aspectRatio:  string;
   features:     { title: string; description: string }[];
   codeSummary:  unknown;
   screenshots:  { id: string; label: string }[];
@@ -194,11 +196,12 @@ function buildGenerationPrompt(args: {
 
   return JSON.stringify(
     {
-      projectSummary: summary || args.projectName,
-      preferredTheme: args.stylePreset,
-      features:       args.features,
-      codeSummary:    args.codeSummary ?? null,
-      screenshots:    args.screenshots,
+      projectSummary:      summary || args.projectName,
+      preferredTheme:      args.stylePreset,
+      preferredAspectRatio: args.aspectRatio,
+      features:            args.features,
+      codeSummary:         args.codeSummary ?? null,
+      screenshots:         args.screenshots,
     },
     null,
     2

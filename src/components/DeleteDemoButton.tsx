@@ -21,6 +21,8 @@ export function DeleteDemoButton({ demoId }: { demoId: string }) {
         throw new Error(data.error ?? "Delete failed");
       }
       toast("Demo deleted", "success");
+      setDeleting(false);
+      setConfirming(false);
       router.refresh();
     } catch (err) {
       toast(err instanceof Error ? err.message : "Delete failed", "error");

@@ -104,6 +104,7 @@ export function NewDemoWizard() {
           sourceType: state.sourceType,
           sourceUrl: state.sourceUrl || undefined,
           stylePreset: state.stylePreset,
+          aspectRatio: state.aspectRatio,
         }),
       });
 

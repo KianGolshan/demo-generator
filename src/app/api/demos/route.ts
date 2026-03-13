@@ -11,6 +11,7 @@ const CreateDemoSchema = z.object({
   sourceType:  z.enum(["url", "screenshots", "repo+url", "repo+screenshots"]),
   sourceUrl:   z.string().url().optional(),
   stylePreset: z.enum(["clean", "cyber", "playful"]).default("clean"),
+  aspectRatio: z.enum(["16:9", "9:16"]).default("16:9"),
 });
 
 /**
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
         sourceType:  parsed.data.sourceType,
         sourceUrl:   parsed.data.sourceUrl,
         stylePreset: parsed.data.stylePreset,
+        aspectRatio: parsed.data.aspectRatio,
       },
     });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import type { DemoConfig, DemoScene, DemoSceneType } from "@/types";
@@ -404,6 +404,11 @@ function InlineEdit({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+
+  // Keep draft in sync when the parent config is replaced (e.g., re-generate)
+  useEffect(() => {
+    if (!editing) setDraft(value);
+  }, [value, editing]);
 
   function commit() {
     onChange(draft.trim() || value);
