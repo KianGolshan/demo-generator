@@ -1,13 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remotion's renderer uses Node built-ins not available in the edge runtime.
-  // Next.js 14 uses the experimental key; Next.js 15+ uses serverExternalPackages.
+  // Mark all Remotion packages as server-external so Next.js webpack doesn't
+  // try to bundle them (they include native binaries + Node-only APIs).
   experimental: {
-    serverComponentsExternalPackages: ["@remotion/renderer", "remotion"],
+    serverComponentsExternalPackages: [
+      "@remotion/renderer",
+      "@remotion/bundler",
+      "@remotion/cli",
+      "remotion",
+    ],
   },
 
   images: {
-    // Allow Supabase Storage domains for screenshot/video thumbnails
     remotePatterns: [
       {
         protocol: "https",
@@ -17,12 +21,19 @@ const nextConfig = {
     ],
   },
 
-  // Needed for Remotion's canvas/webgl dependencies during server render
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals = [
-        ...(config.externals ?? []),
+      // Prevent webpack from trying to bundle Remotion's native binaries.
+      // They are loaded at runtime via require() in the render API route.
+      const remotionExternals = [
         "@remotion/renderer",
+        "@remotion/bundler",
+        "@remotion/cli",
+        "remotion",
+      ];
+      config.externals = [
+        ...(Array.isArray(config.externals) ? config.externals : [config.externals ?? {}]),
+        ...remotionExternals,
       ];
     }
     return config;

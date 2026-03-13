@@ -171,13 +171,15 @@ See `.env.example` for all keys. Required:
 - [x] Slice 3 — Repo analysis pipeline
 - [x] Slice 4 — Claude demo config generation
 - [x] Slice 5 — Remotion video engine
-- [ ] Slice 6 — Render orchestration
+- [x] Slice 6 — Render orchestration
 - [ ] Slice 7 — Dashboard + polish
 
 ---
 
 ## Key Implementation Notes
 
+- **Remotion native binaries:** `@remotion/bundler` includes `@rspack/binding-*` native `.node` files. Must be in `serverComponentsExternalPackages` AND in `webpack.externals` — otherwise Next.js build fails trying to parse the binary.
+- **Render background task:** `void runRender(...)` in the POST handler — returns 202 immediately, render completes asynchronously. Works in local dev / regular Node; may be killed in Supabase edge functions or short-lived serverless. For production, use Remotion Lambda.
 - **GitHub provider_token:** Available in `supabase.auth.getSession().session.provider_token` when user signed in with GitHub OAuth. Pass as the Octokit auth token. Will be `undefined` if user used magic link — Octokit falls back to unauthenticated (60 req/hr limit) for public repos.
 - **Supabase Storage setup required:** Before screenshots upload works, create two buckets in Supabase Storage dashboard: `screenshots` (public read) and `videos` (private). The admin client uses `SUPABASE_SERVICE_ROLE_KEY` for uploads.
 - **Prisma Json cast pattern:** Prisma returns `JsonValue` which can't be directly cast to typed interfaces. Must cast through `unknown` first: `raw.field as unknown as MyType`.

@@ -6,6 +6,7 @@ import { Nav } from "@/components/Nav";
 import { StatusBadge } from "@/components/StatusBadge";
 import { RepoPanel } from "@/components/RepoPanel";
 import { OutlinePanel } from "@/components/OutlinePanel";
+import { RenderPanel } from "@/components/RenderPanel";
 import type { DemoProject, RenderStatus } from "@/types";
 import Link from "next/link";
 
@@ -118,8 +119,8 @@ export default async function DemoDetailPage({ params }: RouteProps) {
             </section>
           )}
 
-          {/* Render — Slice 6 */}
-          <RenderPanel demo={demo} />
+          {/* Render */}
+          <RenderPanelSection demo={demo} />
 
         </div>
       </main>
@@ -247,52 +248,20 @@ function OutlinePanelSection({ demo }: { demo: DemoProject }) {
   );
 }
 
-// ─── Render Panel (Slice 6 placeholder) ──────────────────────────────────────
+// ─── Render Panel (wired to RenderPanel client component) ────────────────────
 
-function RenderPanel({ demo }: { demo: DemoProject }) {
-  const canRender = demo.renderStatus === "config_generated" || demo.renderStatus === "ready";
-
+function RenderPanelSection({ demo }: { demo: DemoProject }) {
   return (
     <section className="glass-card p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="font-display text-lg font-bold">Render Video</h2>
-          <p className="text-muted-fg text-xs font-mono">
-            {demo.renderStatus === "ready"
-              ? "Your video is ready to download."
-              : demo.renderStatus === "rendering"
-              ? "Rendering in progress..."
-              : "Generate an outline first, then render your MP4."}
-          </p>
-        </div>
-        <button
-          className="btn-primary text-sm opacity-50 cursor-not-allowed"
-          disabled
-          title="Coming in Slice 6"
-        >
-          Render →
-        </button>
-      </div>
-
-      {demo.videoUrl ? (
-        <video
-          src={demo.videoUrl}
-          controls
-          className="w-full rounded-lg border border-border"
-        />
-      ) : (
-        <div className="rounded-lg border border-dashed border-border p-6 text-center">
-          <p className="text-muted-fg text-sm font-mono">
-            {/* TODO (Slice 6): Render controls + video player */}
-            Render engine — coming in Slice 6
-          </p>
-          {!canRender && (
-            <p className="text-muted-fg text-xs font-mono mt-1 opacity-60">
-              Complete the outline step first
-            </p>
-          )}
-        </div>
-      )}
+      <h2 className="font-display text-lg font-bold mb-1">Render Video</h2>
+      <p className="text-muted-fg text-xs font-mono mb-4">
+        Export a polished MP4 from your demo outline.
+      </p>
+      <RenderPanel
+        demoId={demo.id}
+        initialStatus={demo.renderStatus}
+        initialVideoUrl={demo.videoUrl}
+      />
     </section>
   );
 }
