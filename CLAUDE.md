@@ -170,7 +170,7 @@ See `.env.example` for all keys. Required:
 - [x] Slice 2 — Auth + project creation
 - [x] Slice 3 — Repo analysis pipeline
 - [x] Slice 4 — Claude demo config generation
-- [ ] Slice 5 — Remotion video engine
+- [x] Slice 5 — Remotion video engine
 - [ ] Slice 6 — Render orchestration
 - [ ] Slice 7 — Dashboard + polish
 

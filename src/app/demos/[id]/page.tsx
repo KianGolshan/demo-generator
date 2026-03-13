@@ -1,12 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Nav } from "@/components/Nav";
 import { StatusBadge } from "@/components/StatusBadge";
 import { RepoPanel } from "@/components/RepoPanel";
 import { OutlinePanel } from "@/components/OutlinePanel";
 import type { DemoProject, RenderStatus } from "@/types";
 import Link from "next/link";
+
+// Dynamically import the player to avoid SSR — Remotion uses browser APIs
+const DemoPlayer = dynamic(
+  () => import("@/components/DemoPlayer").then((m) => m.DemoPlayer),
+  { ssr: false, loading: () => <PlayerSkeleton /> }
+);
 
 type RouteProps = { params: Promise<{ id: string }> };
 
@@ -96,6 +103,20 @@ export default async function DemoDetailPage({ params }: RouteProps) {
 
           {/* Generate outline */}
           <OutlinePanelSection demo={demo} />
+
+          {/* In-browser preview — shown once a config exists */}
+          {demo.demoConfig && (
+            <section className="glass-card p-6">
+              <h2 className="font-display text-lg font-bold mb-1">Preview</h2>
+              <p className="text-muted-fg text-xs font-mono mb-4">
+                In-browser preview of your demo. Click to play.
+              </p>
+              <DemoPlayer
+                config={demo.demoConfig}
+                screenshotUrls={demo.screenshotUrls}
+              />
+            </section>
+          )}
 
           {/* Render — Slice 6 */}
           <RenderPanel demo={demo} />
@@ -273,5 +294,15 @@ function RenderPanel({ demo }: { demo: DemoProject }) {
         </div>
       )}
     </section>
+  );
+}
+
+// ─── Player Skeleton ──────────────────────────────────────────────────────────
+
+function PlayerSkeleton() {
+  return (
+    <div className="w-full aspect-video rounded-xl bg-muted animate-pulse flex items-center justify-center">
+      <span className="text-muted-fg text-xs font-mono">Loading player...</span>
+    </div>
   );
 }
