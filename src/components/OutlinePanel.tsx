@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import type { DemoConfig, DemoScene, DemoSceneType } from "@/types";
 
 type OutlinePanelProps = {
@@ -29,6 +30,7 @@ const SCENE_TYPE_STYLES: Record<
  */
 export function OutlinePanel({ demoId, demoConfig, canGenerate }: OutlinePanelProps) {
   const router = useRouter();
+  const toast  = useToast();
   const [config, setConfig] = useState<DemoConfig | undefined>(demoConfig);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -51,9 +53,12 @@ export function OutlinePanel({ demoId, demoConfig, canGenerate }: OutlinePanelPr
 
       setConfig(data.demoConfig as DemoConfig);
       setDirty(false);
+      toast("Outline generated!", "success");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      setError(msg);
+      toast(msg, "error");
     } finally {
       setGenerating(false);
     }
@@ -79,9 +84,12 @@ export function OutlinePanel({ demoId, demoConfig, canGenerate }: OutlinePanelPr
       setDirty(false);
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 2000);
+      toast("Changes saved", "success");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
+      const msg = err instanceof Error ? err.message : "Save failed";
+      setError(msg);
+      toast(msg, "error");
     } finally {
       setSaving(false);
     }

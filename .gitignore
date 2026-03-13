@@ -26,10 +26,16 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
+.env.local
 .env*.local
 
 # vercel
 .vercel
+
+# claude code internal
+.claude/
+CLAUDE.md
 
 # typescript
 *.tsbuildinfo

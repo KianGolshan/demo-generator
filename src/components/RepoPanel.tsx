@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import type { CodeSummary } from "@/types";
 
 type RepoPanelProps = {
@@ -21,6 +22,7 @@ type RepoPanelProps = {
  */
 export function RepoPanel({ demoId, codeSummary, hasRepoSourceType }: RepoPanelProps) {
   const router = useRouter();
+  const toast  = useToast();
   const [repoInput, setRepoInput] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -48,11 +50,14 @@ export function RepoPanel({ demoId, codeSummary, hasRepoSourceType }: RepoPanelP
 
       setResult(data.codeSummary as CodeSummary);
       setStatus("done");
+      toast("Repo analyzed!", "success");
       // Soft-refresh the server component so other panels reflect the new codeSummary
       router.refresh();
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      setErrorMsg(msg);
       setStatus("error");
+      toast(msg, "error");
     }
   }
 

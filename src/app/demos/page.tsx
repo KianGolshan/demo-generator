@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { StatusBadge } from "@/components/StatusBadge";
+import { DeleteDemoButton } from "@/components/DeleteDemoButton";
 import type { RenderStatus } from "@/types";
 import Link from "next/link";
 
@@ -82,54 +83,58 @@ function DemoCard({ demo }: DemoCardProps) {
   const thumb = urls[0];
 
   return (
-    <Link
-      href={`/demos/${demo.id}`}
-      className="group glass-card overflow-hidden hover:border-accent/40 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/10"
-    >
-      {/* Thumbnail */}
-      <div className="aspect-video bg-muted relative overflow-hidden">
-        {thumb ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={thumb}
-            alt={demo.projectName}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-3xl opacity-20">🎬</span>
+    <div className="group glass-card overflow-hidden hover:border-accent/40 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/10 flex flex-col">
+      <Link href={`/demos/${demo.id}`} className="flex-1 flex flex-col">
+        {/* Thumbnail */}
+        <div className="aspect-video bg-muted relative overflow-hidden">
+          {thumb ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={thumb}
+              alt={demo.projectName}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-3xl opacity-20">🎬</span>
+            </div>
+          )}
+          {/* Style badge overlay */}
+          <div className="absolute top-2 right-2">
+            <span className="px-1.5 py-0.5 rounded text-xs font-mono bg-black/60 text-white capitalize">
+              {demo.stylePreset}
+            </span>
           </div>
-        )}
-        {/* Style badge overlay */}
-        <div className="absolute top-2 right-2">
-          <span className="px-1.5 py-0.5 rounded text-xs font-mono bg-black/60 text-white capitalize">
-            {demo.stylePreset}
-          </span>
         </div>
-      </div>
 
-      {/* Body */}
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-display font-bold text-sm leading-tight group-hover:text-accent transition-colors">
-            {demo.projectName}
-          </h3>
-          <StatusBadge status={demo.renderStatus as RenderStatus} />
+        {/* Body */}
+        <div className="p-4 flex-1">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h3 className="font-display font-bold text-sm leading-tight group-hover:text-accent transition-colors">
+              {demo.projectName}
+            </h3>
+            <StatusBadge status={demo.renderStatus as RenderStatus} />
+          </div>
+          {demo.tagline && (
+            <p className="text-muted-fg text-xs font-mono leading-relaxed line-clamp-2">
+              {demo.tagline}
+            </p>
+          )}
         </div>
-        {demo.tagline && (
-          <p className="text-muted-fg text-xs font-mono leading-relaxed line-clamp-2">
-            {demo.tagline}
-          </p>
-        )}
-        <p className="text-muted-fg text-xs font-mono mt-3 opacity-60">
+      </Link>
+
+      {/* Footer: date + delete */}
+      <div className="px-4 pb-4 flex items-center justify-between">
+        <p className="text-muted-fg text-xs font-mono opacity-60">
           {new Date(demo.createdAt).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
             year: "numeric",
           })}
         </p>
+        <DeleteDemoButton demoId={demo.id} />
       </div>
-    </Link>
+    </div>
   );
 }
 
