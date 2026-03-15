@@ -126,7 +126,8 @@ export interface DemoProject {
   stylePreset:   StylePreset;
   features:      ProjectFeature[];
   codeSummary?:  CodeSummary;
-  demoConfig?:   DemoConfig;
+  demoConfig?:     DemoConfig;
+  generatedCode?:  string;
   renderStatus:  RenderStatus;
   videoUrl?:     string;
   createdAt:     string;

@@ -31,6 +31,8 @@ model DemoProject {
   codeSummary    Json?
   /// DemoConfig JSON — populated by generate-config
   demoConfig     Json?
+  /// Full Remotion TSX source — populated by generate-composition
+  generatedCode  String?
   /// "draft" | "config_generated" | "rendering" | "ready" | "failed"
   renderStatus   String   @default("draft")
   videoUrl       String?

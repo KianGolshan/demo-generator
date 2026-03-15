@@ -51,14 +51,16 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
       );
     }
 
-    if (!raw.demoConfig) {
+    const hasGeneratedCode = !!raw.generatedCode;
+    const hasDemoConfig    = !!raw.demoConfig;
+
+    if (!hasGeneratedCode && !hasDemoConfig) {
       return NextResponse.json<ApiError>(
-        { error: "Generate an outline before rendering.", code: "NO_CONFIG" },
+        { error: "Generate a demo first before rendering.", code: "NO_CONFIG" },
         { status: 400 }
       );
     }
 
-    const demoConfig   = raw.demoConfig as unknown as DemoConfig;
     const screenshotUrls = (raw.screenshotUrls as unknown as string[]) ?? [];
 
     // Mark as rendering immediately so the client can start polling
@@ -67,9 +69,19 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
       data:  { renderStatus: "rendering", videoUrl: null },
     });
 
-    // Kick off the actual render in the background.
-    // We don't await — the 202 response is sent while rendering continues.
-    void runRender({ demoId: id, userId: user.id, demoConfig, screenshotUrls });
+    if (hasGeneratedCode) {
+      // Generated code pipeline: write TSX to disk, bundle generated-entry, render GeneratedDemo
+      void runGeneratedRender({
+        demoId:        id,
+        userId:        user.id,
+        generatedCode: raw.generatedCode as string,
+        screenshotUrls,
+      });
+    } else {
+      // JSON config pipeline: use existing DemoVideo composition
+      const demoConfig = raw.demoConfig as unknown as DemoConfig;
+      void runRender({ demoId: id, userId: user.id, demoConfig, screenshotUrls });
+    }
 
     return NextResponse.json({ renderStatus: "rendering" }, { status: 202 });
   } catch (err) {
@@ -81,7 +93,121 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
   }
 }
 
-// ─── Background render task ───────────────────────────────────────────────────
+// ─── Background render task (generated code path) ────────────────────────────
+
+/**
+ * Generated-code render pipeline:
+ * write GeneratedDemo.tsx → bundle generated-entry → renderMedia → upload → update DB.
+ */
+async function runGeneratedRender({
+  demoId,
+  userId,
+  generatedCode,
+  screenshotUrls,
+}: {
+  demoId:         string;
+  userId:         string;
+  generatedCode:  string;
+  screenshotUrls: string[];
+}) {
+  const tmpDir     = os.tmpdir();
+  const outputPath = path.join(tmpDir, `demoforge-gen-${demoId}.mp4`);
+  const genDemoPath = path.resolve(process.cwd(), "src/remotion/GeneratedDemo.tsx");
+
+  try {
+    console.log(`[render:generated] Starting generated render for demo ${demoId}`);
+    const start = Date.now();
+
+    // 1. Write generated code to src/remotion/GeneratedDemo.tsx
+    await fs.writeFile(genDemoPath, generatedCode, "utf-8");
+    console.log("[render:generated] Wrote GeneratedDemo.tsx");
+
+    // 2. Dynamically import Remotion modules
+    const [{ bundle }, { selectComposition, renderMedia }] = await Promise.all([
+      import("@remotion/bundler"),
+      import("@remotion/renderer"),
+    ]);
+
+    const entryPoint = path.resolve(process.cwd(), "src/remotion/generated-entry.ts");
+
+    // 3. Bundle the generated composition
+    console.log("[render:generated] Bundling generated composition...");
+    const bundleLocation = await bundle({
+      entryPoint,
+      webpackOverride: (config) => ({
+        ...config,
+        resolve: {
+          ...config.resolve,
+          alias: {
+            ...(config.resolve?.alias ?? {}),
+            "@": path.resolve(process.cwd(), "src"),
+          },
+        },
+      }),
+    });
+
+    // 4. Select composition — screenshotUrls are passed as props
+    const inputProps = { screenshotUrls };
+
+    const composition = await selectComposition({
+      serveUrl:  bundleLocation,
+      id:        "GeneratedDemo",
+      inputProps,
+    });
+
+    console.log(
+      `[render:generated] Composition: ${composition.width}x${composition.height} ` +
+      `${composition.durationInFrames} frames @ ${composition.fps}fps`
+    );
+
+    // 5. Render to MP4
+    await renderMedia({
+      composition,
+      serveUrl:       bundleLocation,
+      codec:          "h264",
+      outputLocation: outputPath,
+      inputProps,
+      onProgress: ({ progress }) => {
+        const pct = Math.round(progress * 100);
+        if (pct % 25 === 0) console.log(`[render:generated] Progress: ${pct}%`);
+      },
+    });
+
+    const renderMs = Date.now() - start;
+    console.log(`[render:generated] Rendered in ${(renderMs / 1000).toFixed(1)}s`);
+
+    // 6. Upload MP4 to Supabase Storage
+    const fileBuffer  = await fs.readFile(outputPath);
+    const storagePath = `${userId}/${demoId}/demo.mp4`;
+    const adminClient = createAdminClient();
+
+    const { error: uploadError } = await adminClient.storage
+      .from("videos")
+      .upload(storagePath, fileBuffer, { contentType: "video/mp4", upsert: true });
+
+    if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
+
+    const { data: urlData } = adminClient.storage.from("videos").getPublicUrl(storagePath);
+
+    // 7. Update DB to ready
+    await prisma.demoProject.update({
+      where: { id: demoId },
+      data:  { renderStatus: "ready", videoUrl: urlData.publicUrl },
+    });
+
+    console.log(`[render:generated] Done. videoUrl: ${urlData.publicUrl}`);
+  } catch (err) {
+    console.error("[render:generated] Render failed:", err);
+    await prisma.demoProject.update({
+      where: { id: demoId },
+      data:  { renderStatus: "failed" },
+    });
+  } finally {
+    await fs.unlink(outputPath).catch(() => {});
+  }
+}
+
+// ─── Background render task (JSON config path) ────────────────────────────────
 
 /**
  * Performs the full render pipeline in the background:

@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { RepoPanel } from "@/components/RepoPanel";
 import { OutlinePanel } from "@/components/OutlinePanel";
 import { RenderPanel } from "@/components/RenderPanel";
+import { GenerateCompositionPanel } from "@/components/GenerateCompositionPanel";
 import type { DemoProject, RenderStatus } from "@/types";
 import Link from "next/link";
 
@@ -49,7 +50,8 @@ export default async function DemoDetailPage({ params }: RouteProps) {
     stylePreset:    raw.stylePreset as DemoProject["stylePreset"],
     features:       (raw.features as unknown as DemoProject["features"]) ?? [],
     codeSummary:    raw.codeSummary != null ? (raw.codeSummary as unknown as DemoProject["codeSummary"]) : undefined,
-    demoConfig:     raw.demoConfig != null ? (raw.demoConfig as unknown as DemoProject["demoConfig"]) : undefined,
+    demoConfig:     raw.demoConfig     != null ? (raw.demoConfig     as unknown as DemoProject["demoConfig"])     : undefined,
+    generatedCode:  raw.generatedCode  != null ? (raw.generatedCode  as string)                                  : undefined,
     renderStatus:   raw.renderStatus as RenderStatus,
     videoUrl:       raw.videoUrl ?? undefined,
     createdAt:      raw.createdAt.toISOString(),
@@ -102,10 +104,13 @@ export default async function DemoDetailPage({ params }: RouteProps) {
           {/* Repo analysis */}
           <RepoPanelSection demo={demo} />
 
-          {/* Generate outline */}
+          {/* Generate Demo (code-gen pipeline) — primary path when repo is analyzed */}
+          <GenerateCompositionSection demo={demo} />
+
+          {/* Generate outline (JSON config pipeline) — alternative / screenshot-only path */}
           <OutlinePanelSection demo={demo} />
 
-          {/* In-browser preview — shown once a config exists */}
+          {/* In-browser preview — shown once a JSON config exists */}
           {demo.demoConfig && (
             <section className="glass-card p-6">
               <h2 className="font-display text-lg font-bold mb-1">Preview</h2>
@@ -222,6 +227,37 @@ function RepoPanelSection({ demo }: { demo: DemoProject }) {
   );
 }
 
+// ─── Generate Composition Section ────────────────────────────────────────────
+
+function GenerateCompositionSection({ demo }: { demo: DemoProject }) {
+  // Only show when there's a repo source type — this is the code-gen path
+  const hasRepo = demo.sourceType.includes("repo");
+  if (!hasRepo) return null;
+
+  return (
+    <section className="glass-card p-6 border-accent/20">
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-1">
+          <h2 className="font-display text-lg font-bold">Generate Demo</h2>
+          <span className="status-badge border border-accent/40 bg-accent/10 text-accent text-xs font-mono">
+            AI code gen
+          </span>
+        </div>
+        <p className="text-muted-fg text-xs font-mono">
+          {demo.generatedCode
+            ? "Claude wrote a custom Remotion video for your app — ready to render."
+            : "Claude reads your codebase and writes a custom animated video. No templates."}
+        </p>
+      </div>
+      <GenerateCompositionPanel
+        demoId={demo.id}
+        hasRepoAnalysis={!!demo.codeSummary}
+        hasGeneratedCode={!!demo.generatedCode}
+      />
+    </section>
+  );
+}
+
 // ─── Outline Panel (wired to OutlinePanel client component) ──────────────────
 
 function OutlinePanelSection({ demo }: { demo: DemoProject }) {
@@ -229,10 +265,19 @@ function OutlinePanelSection({ demo }: { demo: DemoProject }) {
     demo.screenshotUrls.length > 0 || demo.sourceUrl || demo.codeSummary
   );
 
+  // When code-gen is active and no JSON config exists, collapse this section
+  const hasCodeGen = demo.sourceType.includes("repo");
+  if (hasCodeGen && !demo.demoConfig) return null;
+
   return (
     <section className="glass-card p-6">
       <div className="mb-4">
-        <h2 className="font-display text-lg font-bold">Demo Outline</h2>
+        <h2 className="font-display text-lg font-bold">
+          Demo Outline
+          {hasCodeGen && (
+            <span className="ml-2 text-muted-fg text-xs font-mono font-normal">(alternative)</span>
+          )}
+        </h2>
         <p className="text-muted-fg text-xs font-mono">
           {demo.demoConfig
             ? "Scene-by-scene outline — click any text to edit, drag to reorder."
