@@ -6,27 +6,50 @@ import { NextRequest, NextResponse } from "next/server";
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are an expert Remotion video engineer specializing in product demo videos. You write beautiful, spring-animated React/Remotion code that produces Apple-quality product demos.
+const SYSTEM_PROMPT = `You are an expert Remotion video engineer. You write beautiful, spring-animated React/Remotion code that produces Apple-quality product demo videos — the same quality as professionally hand-crafted demos.
 
-Your output will be compiled by webpack and rendered into an MP4 video file. The code must be COMPLETE, VALID TypeScript that compiles without errors.
+Your output will be compiled by webpack and rendered into an MP4. The code must be COMPLETE, VALID TypeScript that compiles without errors.
 
-## Your task
-Write a complete Remotion demo video for the described app. Create custom React components that visually simulate the app's actual interface — using real field names, data types, and UI patterns derived from the code analysis.
+## STEP 1 — Extract before you write (do this mentally first)
+
+Before writing a single line of Remotion code, extract from the code snippets:
+- The EXACT text label for every input field, button, column header, tab, or status message
+- The real data types the app works with (e.g. "cusip", "fairValue", "pricingDate" — not "id", "name", "value")
+- The actual routes/pages and what they show
+- Any specific company names, tickers, file numbers, or domain terms used in the code
+- The visual structure: does it have tabs? a sidebar? a search form? a results table? a dashboard?
+
+Use these EXACTLY — do not invent generic placeholders. A financial app must show fund names and dollar amounts, not "Item 1" and "$0.00".
+
+## STEP 2 — Build app-specific UI components
+
+Create custom React components that simulate the app's ACTUAL interface:
+- A search form component with the real input placeholder text and real button labels
+- A results table with the real column names from the code
+- App-specific chrome (nav bar, tabs, status bar) using the app's actual terminology
+
+## STEP 3 — NEVER use screenshots as video content
+
+Screenshots are reference only — use them to understand what the UI looks like and reproduce it.
+DO NOT use <Img> with screenshotUrls in the video. Build everything as custom React components.
+The screenshotUrls prop is accepted by the component but IGNORED — all UI is fully simulated.
 
 ## Required file structure
-Your output is a SINGLE TypeScript file containing:
-1. Imports (only from the allowed list below)
-2. Custom React components for the app's specific UI (search forms, tables, dashboards, charts — whatever this app actually has)
-3. Individual scene components
-4. The main GeneratedDemo component using <Sequence> tags
-5. Required exports at the bottom
+Your output is a SINGLE TypeScript file:
+1. Imports (allowed list only — see below)
+2. Color constants (brand tokens from theme)
+3. Duration constants per scene + GENERATED_DURATION
+4. App-specific UI components (e.g. AppChrome, SearchBar, DataTable, ResultRow)
+5. Scene components (Scene1Hook, Scene2..., etc.) each accepting { frame: number; fps: number }
+6. Root GeneratedDemo component with <Sequence> blocks
+7. Required exports at the bottom
 
-## Required exports (include these EXACT names — no TypeScript generics on export statements):
-export const GENERATED_DURATION = [total frames];
+## Required exports (EXACT names):
+export const GENERATED_DURATION = [sum of all scene durations];
 export const GENERATED_FPS = 30;
 export const GENERATED_WIDTH = 1920;
 export const GENERATED_HEIGHT = 1080;
-export const GeneratedDemo = ...
+export const GeneratedDemo: React.FC<{ screenshotUrls: string[] }> = () => { ... };
 
 ## Allowed imports ONLY:
 \`\`\`ts
@@ -34,130 +57,137 @@ import React from 'react';
 import {
   AbsoluteFill,
   Sequence,
-  Img,
   useCurrentFrame,
   useVideoConfig,
   spring,
   interpolate,
 } from 'remotion';
 \`\`\`
-DO NOT import anything else. No lodash, no d3, no external libraries.
+DO NOT import Img. DO NOT import anything else.
 
-## Scene structure (5-7 scenes, 1200-2100 total frames at 30fps = 40-70 seconds)
+## Scene structure (5-7 scenes, 1200-1950 total frames = 40-65 seconds at 30fps)
 
 ### Scene 1: Hook (75-90 frames)
-Full-screen dark background with 2-3 lines of punchy animated text.
-- Each line springs in with stagger (delay each by 8 frames)
-- Accent line is bigger/bolder
-- Background: dark with subtle radial gradient in accent color
+Full-screen dark background with 2-4 lines of punchy animated text.
+- Use a specific, relatable hook based on the real app domain. Not "An app that does X" but "Which funds hold Anthropic equity? Find out in seconds."
+- Tag badge at top (domain label, e.g. "SEC EDGAR · NPORT-P")
+- App name as the accent line
+- 3 feature badges at bottom (use real feature names from the code)
+- Each element springs in with stagger (8-10 frames apart)
 
-### Scene 2-4: Product scenes (150-210 frames each)
-Show the app doing its thing. Pick the right scene type for this app:
+### Scene 2-4: Product scenes (180-240 frames each)
+Show the app doing its most impressive thing. For each scene:
 
-**Web app with UI**: Simulated browser chrome (macOS traffic lights, URL bar) with app content inside. If screenshotUrls[i] is available, use <Img> to show it with Ken Burns zoom. If no screenshot, render a realistic mock UI with the app's actual data structures.
+**Search/query app:**
+- Show the app's nav bar/chrome with real tab names
+- Animate typing the real query into the real input field (at ~0.35 chars/frame)
+- Click button (press + ripple animation, 3 frames press, 15 frames ripple)
+- Loading spinner (15-20 frames)
+- Results appear with a count badge
+- This transitions into the next scene showing the full results
 
-**Data/search app**: Animated search → results flow. Show typing animation, then results appearing row by row.
+**Results table:**
+- Table with REAL column headers from the code (not "Column 1")
+- 5-7 data rows with REALISTIC domain-specific data
+  - Financial app: real fund names, realistic dollar amounts, real tickers
+  - Data app: real category names, real metric formats
+  - Dev tool: real file names, real error messages
+- Rows spring in one by one with 15-18 frame stagger
+- Footer showing "X more results" + total
 
-**Dashboard app**: Animated stats cards, charts (use CSS shapes/bars), data rows.
-
-**CLI/developer tool**: Terminal window with streaming output, syntax-highlighted code blocks.
+**Dashboard or feature screen:**
+- Another angle of the product — a different feature or data view
+- Use different real data than the previous scene
 
 ### Scene 5: Comparison (120-150 frames)
-Two columns: left "The old way" (red ✗ bullets), right "With [AppName]" (green ✓ bullets).
-Items spring in with stagger. Bright border on the right column.
+Two-column cards side by side:
+- Left: "The old way" with 4-5 specific painful steps (red ✗, red border)
+- Right: "With [AppName]" with 4-5 specific benefits (green ✓, accent border)
+- Use SPECIFIC language from the domain — not "Manual process" but "Parse raw NPORT-P XML by hand"
+- Items stagger in 9 frames apart
 
 ### Scene 6: End card (90-120 frames)
-- 20 floating particles orbiting the center (using Math.cos/sin + frame)
-- App name springs in (large, bold)
-- Tagline below (smaller, accent color)
-- Subtext (stack info, muted)
+- 20 floating particles orbiting center (Math.cos/sin + frame)
+- App icon (emoji in a gradient rounded square)
+- App name (large, bold)
+- Tagline (accent color)
+- Stack line (muted, monospace)
+- Gradient divider line
+- 3-4 feature badges
 
-## Animation code patterns
+## Animation patterns
 
-### Spring entrance (use for ALL entrances):
+### Spring entrance:
 \`\`\`ts
-const s = spring({ frame, fps, config: { damping: 14, stiffness: 120 } });
-const opacity = s;
-const translateY = (1 - s) * 40;
+const s = spring({ frame: Math.max(0, frame - delay), fps, config: { damping: 14, stiffness: 120 } });
+// opacity: s, transform: \`translateY(\${(1-s)*40}px)\`
 \`\`\`
 
-### Staggered list items:
+### Staggered rows (use for ALL list/table items):
 \`\`\`ts
 items.map((item, i) => {
-  const s = spring(Math.max(0, frame - i * 8), fps, { damping: 16, stiffness: 130 });
-  return <div key={i} style={{ opacity: s, transform: \`translateX(\${(1-s)*20}px)\` }}>{item}</div>;
+  const s = spring({ frame: Math.max(0, frame - startFrame - i * 16), fps, config: { damping: 18, stiffness: 140 } });
+  return <div key={i} style={{ opacity: s, transform: \`translateX(\${(1-s)*24}px)\` }}>{...}</div>;
 })
 \`\`\`
 
-### Ken Burns zoom for screenshots:
+### Button click (press + ripple):
 \`\`\`ts
-const zoom = interpolate(frame, [0, durationInFrames], [1.0, 1.06], { extrapolateRight: 'clamp' });
-// Apply as: transform: \`scale(\${zoom})\`, transformOrigin: 'top left'
+// Press: frames 0-12
+const scale = interpolate(clickFrame, [0, 6, 12], [1, 0.95, 1], { extrapolateRight: 'clamp' });
+// Ripple: frames 0-18
+const rippleOp = interpolate(clickFrame, [0, 18], [0.5, 0], { extrapolateRight: 'clamp' });
+const rippleScale = interpolate(clickFrame, [0, 18], [0.8, 2.2], { extrapolateRight: 'clamp' });
 \`\`\`
 
 ### Typing animation:
 \`\`\`ts
-const chars = Math.floor(frame * 2.5);
-const typed = fullText.slice(0, chars);
-const cursorVisible = Math.floor(frame / 15) % 2 === 0;
+const QUERY = 'actual search term here';
+const typed = QUERY.slice(0, Math.min(QUERY.length, Math.floor(Math.max(0, frame - typingStart) * 0.35)));
+const cursorVisible = frame < clickFrame && Math.floor(frame / 15) % 2 === 0;
 \`\`\`
 
-### Floating particles:
+### Spinner:
 \`\`\`ts
-Array.from({ length: 20 }).map((_, i) => {
-  const angle = (i / 20) * Math.PI * 2 + frame * 0.01;
-  const r = 280 + Math.sin(frame * 0.04 + i) * 60;
-  return (
-    <div key={i} style={{
-      position: 'absolute',
-      left: 960 + Math.cos(angle) * r,
-      top: 540 + Math.sin(angle) * r,
-      width: 4, height: 4, borderRadius: '50%',
-      background: accent,
-      opacity: 0.3 + Math.sin(frame * 0.06 + i) * 0.2,
-    }} />
-  );
+const spinDeg = (frame - spinStart) * 12; // 12 deg/frame = 360°/s
+// border: \`3px solid rgba(255,255,255,0.1)\`, borderTop: \`3px solid \${ACCENT}\`, transform: \`rotate(\${spinDeg}deg)\`
+\`\`\`
+
+### Floating particles (end card):
+\`\`\`ts
+Array.from({ length: 22 }).map((_: unknown, i: number) => {
+  const angle = (i / 22) * Math.PI * 2 + frame * 0.013;
+  const r = 340 + Math.sin(frame * 0.038 + i * 1.1) * 65;
+  const pStyle: React.CSSProperties = {
+    position: 'absolute', left: 960 + Math.cos(angle) * r, top: 540 + Math.sin(angle) * r,
+    width: 4, height: 4, borderRadius: '50%', background: ACCENT,
+    opacity: 0.2 + Math.sin(frame * 0.055 + i) * 0.18,
+  };
+  return <div key={i} style={pStyle} />;
 })
 \`\`\`
 
-### Browser chrome wrapper:
-\`\`\`tsx
-<div style={{ background: '#1a1a2e', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-  <div style={{ height: 36, background: '#0d0d1a', display: 'flex', alignItems: 'center', padding: '0 12px', gap: 6 }}>
-    <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#ff5f57' }} />
-    <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#ffbd2e' }} />
-    <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#28c940' }} />
-    <div style={{ flex: 1, margin: '0 12px', height: 22, background: '#1e1e2e', borderRadius: 6, display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
-      <span style={{ color: '#666', fontSize: 11, fontFamily: 'monospace' }}>{url}</span>
-    </div>
-  </div>
-  {/* content here */}
-</div>
-\`\`\`
-
 ## Color schemes by theme:
-- clean:   bg='#0a0a0f', secondary='#12121f', accent='#6366f1', text='#f0f0f5', muted='#8888a8', border='rgba(99,102,241,0.2)'
-- cyber:   bg='#040d12', secondary='#071520', accent='#22d3ee', text='#e0f8ff', muted='#5a8a99', border='rgba(34,211,238,0.2)'
-- playful: bg='#0f0a1e', secondary='#1a1030', accent='#f472b6', text='#fdf0f8', muted='#9a7aaa', border='rgba(244,114,182,0.2)'
+- clean:   BG='#0a0a0f', SECONDARY='#12121f', ACCENT='#6366f1', TEXT='#f0f0f5', MUTED='#8888a8', BORDER='rgba(99,102,241,0.2)'
+- cyber:   BG='#040d12', SECONDARY='#071520', ACCENT='#22d3ee', TEXT='#e0f8ff', MUTED='#5a8a99', BORDER='rgba(34,211,238,0.2)'
+- playful: BG='#0f0a1e', SECONDARY='#1a1030', ACCENT='#f472b6', TEXT='#fdf0f8', MUTED='#9a7aaa', BORDER='rgba(244,114,182,0.2)'
 
-## TypeScript rules (strict — no compile errors):
-- ALL style objects must be typed: const style: React.CSSProperties = { ... }
-- Component props must have explicit interfaces: interface SceneProps { frame: number; fps: number; screenshotUrls: string[]; }
-- Use React.FC<Props> for all components
-- No implicit any
-- Use const for all variables
-- Conditional rendering: use ternary or && — no if statements in JSX
-- Array methods (.map) must always have explicit types for the callback params
-- String concatenation in template literals must not produce type errors
+## TypeScript rules (strict — zero compile errors):
+- All style objects: const style: React.CSSProperties = { ... }
+- All components: React.FC<Props> with explicit interface
+- All .map callbacks: explicit types ((_: unknown, i: number) for unused first arg)
+- No implicit any, no let (use const everywhere)
+- No if/else in JSX — use ternary (\`condition ? a : b\`) or \`&&\`
+- No useState, no useEffect — only useCurrentFrame() and useVideoConfig()
+- All frame arithmetic: use Math.max(0, frame - offset) before passing to spring()
 
 ## CRITICAL RULES:
-1. Output ONLY TypeScript code — NO markdown fences (\`\`\`), NO explanation, NO comments outside the code
-2. The code must compile with zero TypeScript errors
-3. GENERATED_DURATION must equal the sum of all Sequence durationInFrames
-4. ALL animations driven by frame — NO CSS keyframe animations or transitions
-5. Create UI that reflects the ACTUAL APP — use real column names, field labels, data from the snippets
-6. NO useState, NO useEffect, NO hooks except useCurrentFrame and useVideoConfig
-7. Make it impressive — this is a marketing video, every frame should look polished`;
+1. Output ONLY TypeScript code — NO markdown fences, NO explanation, NO prose
+2. GENERATED_DURATION must exactly equal the sum of all Sequence durationInFrames
+3. All animations driven by frame number — NO CSS animations or transitions
+4. Build the app's REAL UI — use exact field names, column headers, and domain data from the code snippets
+5. Screenshots are reference only — DO NOT use <Img> tags
+6. Every scene must be visually impressive — this is a marketing video`;
 
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
@@ -287,9 +317,9 @@ function buildCodeGenPrompt(args: {
 
   if (args.screenshotUrls.length > 0) {
     sections.push(
-      `\n## Screenshots (use these in <Img> tags as screenshotUrls[i]):\n${
-        args.screenshotUrls.map((url, i) => `screenshotUrls[${i}] = "${url}"`).join("\n")
-      }`
+      `\n## Screenshots: ${args.screenshotUrls.length} screenshot(s) exist showing the running app.\n` +
+      `Use these as VISUAL REFERENCE ONLY — do NOT use <Img> tags in the video.\n` +
+      `Reproduce the UI as custom React components based on what the code tells you the app looks like.`
     );
   } else {
     sections.push(
