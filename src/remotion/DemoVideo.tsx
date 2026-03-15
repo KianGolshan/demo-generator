@@ -1,74 +1,107 @@
 import { AbsoluteFill, Sequence } from "remotion";
 import type { DemoConfig } from "@/types";
-import { FPS, VIDEO_DIMENSIONS, getTheme } from "./theme";
-import { IntroScene } from "./scenes/IntroScene";
-import { FeatureScene } from "./scenes/FeatureScene";
-import { OutroScene } from "./scenes/OutroScene";
+import { VIDEO_DIMENSIONS, getTheme } from "./theme";
+
+// New scene components
+import { HookScene }        from "./scenes/HookScene";
+import { CodeScene }        from "./scenes/CodeScene";
+import { BrowserFlowScene } from "./scenes/BrowserFlowScene";
+import { TerminalScene }    from "./scenes/TerminalScene";
+import { ComparisonScene }  from "./scenes/ComparisonScene";
+import { EndCardScene }     from "./scenes/EndCardScene";
 
 export interface DemoVideoProps {
   /** Full DemoConfig as generated/edited by the user. */
   config: DemoConfig;
   /**
    * Array of screenshot public URLs.
-   * Positionally matches scene.screenshotId (which is an index string "0", "1", ...).
+   * Kept for backward compatibility — new scene types don't use these directly.
    */
   screenshotUrls: string[];
 }
 
 /**
  * Root Remotion composition. Maps DemoConfig scenes to typed scene components
- * wrapped in <Sequence> blocks, each with the correct durationInFrames (at 30fps).
+ * wrapped in <Sequence> blocks. Scenes now use durationFrames (not durationSeconds).
  *
- * @param config        - The DemoConfig to render.
- * @param screenshotUrls - Resolved public URLs for screenshots.
+ * Supported scene types: hook | code | browser-flow | terminal | comparison | end-card
  */
-export const DemoVideo: React.FC<DemoVideoProps> = ({ config, screenshotUrls }) => {
+export const DemoVideo: React.FC<DemoVideoProps> = ({ config }) => {
   const theme = getTheme(config.theme);
 
-  // Calculate cumulative frame offsets for each scene
   let frameOffset = 0;
 
   return (
     <AbsoluteFill style={{ background: theme.bg }}>
       {config.scenes.map((scene, i) => {
-        const durationInFrames = Math.max(1, Math.round(scene.durationSeconds * FPS));
+        const durationInFrames = Math.max(1, scene.durationFrames);
         const from = frameOffset;
         frameOffset += durationInFrames;
 
-        // Resolve screenshotId → URL
-        const screenshotUrl =
-          scene.screenshotId != null
-            ? screenshotUrls[parseInt(scene.screenshotId, 10)]
-            : undefined;
-
         return (
           <Sequence key={i} from={from} durationInFrames={durationInFrames}>
-            {scene.type === "intro" && (
-              <IntroScene
-                headline={scene.headline}
-                tagline={config.tagline}
-                body={scene.body}
+
+            {scene.type === "hook" && (
+              <HookScene
+                lines={scene.lines ?? [scene.headline ?? scene.title ?? ""]}
+                accentLine={scene.accentLine}
                 theme={theme}
               />
             )}
-            {scene.type === "feature" && (
-              <FeatureScene
+
+            {scene.type === "code" && (
+              <CodeScene
+                filename={scene.filename ?? "index.ts"}
+                codeLines={scene.codeLines ?? []}
+                highlightLines={scene.highlightLines}
+                errorLines={scene.errorLines}
+                animateTyping={scene.animateTyping}
+                overlayText={scene.overlayText}
+                overlaySub={scene.overlaySub}
                 headline={scene.headline}
-                body={scene.body}
-                screenshotUrl={screenshotUrl}
-                technicalNote={scene.technicalNote ?? undefined}
                 theme={theme}
               />
             )}
-            {scene.type === "outro" && (
-              <OutroScene
+
+            {scene.type === "browser-flow" && (
+              <BrowserFlowScene
+                url={scene.url ?? "localhost:3000"}
+                steps={scene.steps ?? []}
                 headline={scene.headline}
-                cta={scene.cta ?? undefined}
-                technicalNote={scene.technicalNote ?? undefined}
-                body={scene.body}
+                overlayText={scene.overlayText}
                 theme={theme}
               />
             )}
+
+            {scene.type === "terminal" && (
+              <TerminalScene
+                terminalLines={scene.terminalLines ?? []}
+                overlayText={scene.overlayText}
+                overlaySub={scene.overlaySub}
+                theme={theme}
+              />
+            )}
+
+            {scene.type === "comparison" && (
+              <ComparisonScene
+                headline={scene.headline ?? "Before vs. After"}
+                leftTitle={scene.leftTitle ?? "The old way"}
+                leftItems={scene.leftItems ?? []}
+                rightTitle={scene.rightTitle ?? "With this app"}
+                rightItems={scene.rightItems ?? []}
+                theme={theme}
+              />
+            )}
+
+            {scene.type === "end-card" && (
+              <EndCardScene
+                title={scene.title ?? config.title}
+                tagline={scene.tagline ?? config.tagline}
+                subtext={scene.subtext}
+                theme={theme}
+              />
+            )}
+
           </Sequence>
         );
       })}
@@ -77,22 +110,18 @@ export const DemoVideo: React.FC<DemoVideoProps> = ({ config, screenshotUrls }) 
 };
 
 /**
- * Calculates total durationInFrames for a DemoConfig (sum of all scene durations * FPS).
- *
- * @param config - The DemoConfig to measure.
- * @returns Total frame count at 30fps.
+ * Calculates total durationInFrames for a DemoConfig.
+ * Uses durationFrames directly (no fps conversion needed).
  */
 export function getTotalFrames(config: DemoConfig): number {
   return config.scenes.reduce(
-    (sum, scene) => sum + Math.max(1, Math.round(scene.durationSeconds * FPS)),
+    (sum, scene) => sum + Math.max(1, scene.durationFrames),
     0
   );
 }
 
 /**
  * Returns the video width/height for a given aspect ratio.
- *
- * @param aspectRatio - "16:9" or "9:16".
  */
 export function getVideoDimensions(aspectRatio: DemoConfig["aspectRatio"]) {
   return VIDEO_DIMENSIONS[aspectRatio] ?? VIDEO_DIMENSIONS["16:9"];

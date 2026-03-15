@@ -71,6 +71,11 @@ export function RenderPanel({ demoId, initialStatus, initialVideoUrl }: RenderPa
     }, POLL_INTERVAL_MS);
   }, [demoId, stopPolling]);
 
+  // Sync status when server re-renders with updated props (e.g. after router.refresh())
+  useEffect(() => {
+    setStatus(initialStatus);
+  }, [initialStatus]);
+
   // Start polling automatically if we're already rendering (e.g. page reload mid-render)
   useEffect(() => {
     if (initialStatus === "rendering") startPolling();

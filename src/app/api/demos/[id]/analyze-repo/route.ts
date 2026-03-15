@@ -234,16 +234,23 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    // 7. Save to DB
+    // 7. Extract top 3 code snippets from the fetched files and merge into codeSummary
+    const codeSnippets = fileContents.slice(0, 3).map(({ path, content }) => ({
+      filename: path,
+      content:  content.slice(0, 1500),
+    }));
+
+    const codeSummaryWithSnippets = { ...codeSummary, codeSnippets };
+
+    // 8. Save to DB
     await prisma.demoProject.update({
       where: { id },
       data: {
-        codeSummary: codeSummary as object,
-        // If sourceType doesn't already include 'repo', upgrade it
+        codeSummary: codeSummaryWithSnippets as object,
       },
     });
 
-    return NextResponse.json({ codeSummary }, { status: 200 });
+    return NextResponse.json({ codeSummary: codeSummaryWithSnippets }, { status: 200 });
   } catch (err) {
     console.error("[POST /api/demos/[id]/analyze-repo]", err);
     return NextResponse.json<ApiError>(

@@ -10,12 +10,11 @@ interface FeatureSceneProps {
 }
 
 /**
- * Feature scene — screenshot with Ken Burns pan + animated text overlay.
- * - Screenshot fills right 55% of frame with a slow Ken Burns zoom
+ * Feature scene — floating browser mockup on right + animated text overlay on left.
+ * - Screenshot shown inside a browser-chrome frame with drop shadow + tilt
  * - Headline slides in from the left
- * - Body bullets stagger in 200ms (6 frames) apart
+ * - Body bullets stagger in 200ms apart
  * - Optional tech badge fades in at bottom-left
- * - Left panel: dark gradient with content
  */
 export const FeatureScene: React.FC<FeatureSceneProps> = ({
   headline,
@@ -27,11 +26,23 @@ export const FeatureScene: React.FC<FeatureSceneProps> = ({
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
-  // Ken Burns: slow zoom + subtle pan over the full scene duration
-  const zoom = interpolate(frame, [0, durationInFrames], [1.0, 1.08], {
-    extrapolateRight: "clamp",
-  });
-  const panX = interpolate(frame, [0, durationInFrames], [0, -24], {
+  // Browser mockup entrance: slides in from right + slight scale
+  const mockupDelay = fps * 0.1;
+  const mockupOpacity = interpolate(
+    frame,
+    [mockupDelay, mockupDelay + fps * 0.5],
+    [0, 1],
+    { extrapolateRight: "clamp" }
+  );
+  const mockupX = interpolate(
+    frame,
+    [mockupDelay, mockupDelay + fps * 0.5],
+    [80, 0],
+    { extrapolateRight: "clamp" }
+  );
+
+  // Subtle Ken Burns inside the screenshot
+  const zoom = interpolate(frame, [0, durationInFrames], [1.0, 1.05], {
     extrapolateRight: "clamp",
   });
 
@@ -71,59 +82,107 @@ export const FeatureScene: React.FC<FeatureSceneProps> = ({
     { extrapolateRight: "clamp" }
   );
 
-  const LEFT_PANEL_WIDTH = "42%";
-
   return (
     <AbsoluteFill style={{ background: theme.bg, fontFamily: "sans-serif", overflow: "hidden" }}>
 
-      {/* Screenshot — right side with Ken Burns */}
+      {/* Subtle background gradient */}
+      <AbsoluteFill style={{ background: theme.gradient, opacity: 0.4 }} />
+
+      {/* Background grid */}
+      <AbsoluteFill
+        style={{
+          backgroundImage: `
+            linear-gradient(${theme.gridColor} 1px, transparent 1px),
+            linear-gradient(90deg, ${theme.gridColor} 1px, transparent 1px)
+          `,
+          backgroundSize: "80px 80px",
+          opacity: 0.5,
+        }}
+      />
+
+      {/* Browser mockup — right side */}
       {screenshotUrl && (
         <div
           style={{
-            position: "absolute",
-            right:    0,
-            top:      0,
-            width:    "62%",
-            height:   "100%",
-            overflow: "hidden",
+            position:  "absolute",
+            right:     "5%",
+            top:       "50%",
+            transform: `translateX(${mockupX}px) translateY(-50%) rotate(1.5deg)`,
+            width:     "52%",
+            opacity:   mockupOpacity,
+            zIndex:    2,
+            // Drop shadow for floating effect
+            filter:    "drop-shadow(0 32px 64px rgba(0,0,0,0.55))",
           }}
         >
-          {/* Fade-in gradient overlay on left edge (blends with panel) */}
+          {/* Browser chrome */}
           <div
             style={{
-              position:   "absolute",
-              left:       0,
-              top:        0,
-              width:      "35%",
-              height:     "100%",
-              background: `linear-gradient(90deg, ${theme.bg}, transparent)`,
-              zIndex:     2,
+              background:   "#1e1e2e",
+              border:       `1px solid ${theme.border}`,
+              borderBottom: "none",
+              borderRadius: "12px 12px 0 0",
+              padding:      "12px 16px",
+              display:      "flex",
+              alignItems:   "center",
+              gap:          "8px",
             }}
-          />
-          <Img
-            src={screenshotUrl}
-            style={{
-              width:          "100%",
-              height:         "100%",
-              objectFit:      "cover",
-              objectPosition: "top left",
-              transform:      `scale(${zoom}) translateX(${panX}px)`,
-              transformOrigin: "center center",
-            }}
-          />
-          {/* Vignette */}
+          >
+            {/* Traffic lights */}
+            <div style={{ display: "flex", gap: "6px" }}>
+              {["#ff5f57", "#febc2e", "#28c840"].map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width:        "12px",
+                    height:       "12px",
+                    borderRadius: "50%",
+                    background:   c,
+                    opacity:      0.9,
+                  }}
+                />
+              ))}
+            </div>
+            {/* Fake URL bar */}
+            <div
+              style={{
+                flex:         1,
+                background:   "rgba(255,255,255,0.06)",
+                border:       "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "6px",
+                height:       "22px",
+                marginLeft:   "8px",
+              }}
+            />
+          </div>
+
+          {/* Screenshot */}
           <div
             style={{
-              position:   "absolute",
-              inset:      0,
-              background: `linear-gradient(to bottom, transparent 60%, ${theme.bg}80)`,
-              zIndex:     1,
+              overflow:     "hidden",
+              border:       `1px solid ${theme.border}`,
+              borderTop:    "none",
+              borderRadius: "0 0 12px 12px",
+              aspectRatio:  "16/10",
             }}
-          />
+          >
+            <Img
+              src={screenshotUrl}
+              style={{
+                width:          "100%",
+                height:         "100%",
+                objectFit:      "cover",
+                objectPosition: "top left",
+                transform:      `scale(${zoom})`,
+                transformOrigin: "top left",
+                display:        "block",
+              }}
+            />
+          </div>
         </div>
       )}
 
-      {/* No screenshot — full-bg gradient */}
+      {/* No screenshot — just gradient bg */}
       {!screenshotUrl && (
         <AbsoluteFill style={{ background: theme.gradient }} />
       )}
@@ -134,26 +193,23 @@ export const FeatureScene: React.FC<FeatureSceneProps> = ({
           position:      "absolute",
           left:          0,
           top:           0,
-          width:         LEFT_PANEL_WIDTH,
+          width:         "46%",
           height:        "100%",
           display:       "flex",
           flexDirection: "column",
           justifyContent: "center",
-          padding:       "80px 72px 80px 96px",
+          padding:       "80px 64px 80px 96px",
           opacity:       panelOpacity,
-          background:    screenshotUrl
-            ? `linear-gradient(90deg, ${theme.bg} 70%, transparent)`
-            : "transparent",
           zIndex:        3,
         }}
       >
         {/* Accent pill */}
         <div
           style={{
-            display:        "flex",
-            alignItems:     "center",
-            gap:            "8px",
-            marginBottom:   "32px",
+            display:      "flex",
+            alignItems:   "center",
+            gap:          "8px",
+            marginBottom: "32px",
           }}
         >
           <div
@@ -180,7 +236,7 @@ export const FeatureScene: React.FC<FeatureSceneProps> = ({
         {/* Headline */}
         <h2
           style={{
-            fontSize:      "58px",
+            fontSize:      "54px",
             fontWeight:    800,
             color:         theme.text,
             margin:        0,
@@ -227,11 +283,11 @@ export const FeatureScene: React.FC<FeatureSceneProps> = ({
               <div
                 key={i}
                 style={{
-                  display:   "flex",
+                  display:    "flex",
                   alignItems: "flex-start",
-                  gap:       "12px",
-                  opacity:   bulletOpacity,
-                  transform: `translateX(${bulletX}px)`,
+                  gap:        "12px",
+                  opacity:    bulletOpacity,
+                  transform:  `translateX(${bulletX}px)`,
                 }}
               >
                 <span

@@ -6,48 +6,43 @@ import { useToast } from "@/components/Toast";
 import type { DemoConfig, DemoScene, DemoSceneType } from "@/types";
 
 type OutlinePanelProps = {
-  demoId:     string;
-  demoConfig: DemoConfig | undefined;
+  demoId:      string;
+  demoConfig:  DemoConfig | undefined;
   canGenerate: boolean;
 };
 
-const SCENE_TYPE_STYLES: Record<
-  DemoSceneType,
-  { label: string; color: string }
-> = {
-  intro:   { label: "Intro",   color: "border-accent/40 bg-accent/10 text-accent" },
-  feature: { label: "Feature", color: "border-success/40 bg-success/10 text-success" },
-  outro:   { label: "Outro",   color: "border-warning/40 bg-warning/10 text-warning" },
+const SCENE_TYPE_STYLES: Record<DemoSceneType, { label: string; color: string }> = {
+  "hook":        { label: "Hook",         color: "border-accent/40 bg-accent/10 text-accent" },
+  "code":        { label: "Code",         color: "border-blue-400/40 bg-blue-400/10 text-blue-400" },
+  "browser-flow":{ label: "Browser Flow", color: "border-green-400/40 bg-green-400/10 text-green-400" },
+  "terminal":    { label: "Terminal",     color: "border-yellow-400/40 bg-yellow-400/10 text-yellow-400" },
+  "comparison":  { label: "Comparison",   color: "border-purple-400/40 bg-purple-400/10 text-purple-400" },
+  "end-card":    { label: "End Card",     color: "border-pink-400/40 bg-pink-400/10 text-pink-400" },
 };
 
 /**
  * Interactive outline panel for the demo detail page.
- * - "Generate Outline" button triggers POST /api/demos/[id]/generate-config
- * - Renders scenes as editable, reorderable cards
- * - Supports inline editing of headline and body bullets
- * - "Save Changes" PATCHes the updated demoConfig to DB
- * - "Re-generate" discards edits and calls Claude again
+ * Supports new animated scene types: hook, code, browser-flow, terminal, comparison, end-card.
+ * Scenes use durationFrames (at 30fps) instead of durationSeconds.
  */
 export function OutlinePanel({ demoId, demoConfig, canGenerate }: OutlinePanelProps) {
   const router = useRouter();
   const toast  = useToast();
-  const [config, setConfig] = useState<DemoConfig | undefined>(demoConfig);
+  const [config, setConfig]     = useState<DemoConfig | undefined>(demoConfig);
   const [generating, setGenerating] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving]     = useState(false);
+  const [dirty, setDirty]       = useState(false);
+  const [error, setError]       = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
 
-  // ── Generate ──────────────────────────────────────────────────────────────
+  // ── Generate ────────────────────────────────────────────────────────────────
 
   async function handleGenerate() {
     setGenerating(true);
     setError(null);
 
     try {
-      const res = await fetch(`/api/demos/${demoId}/generate-config`, {
-        method: "POST",
-      });
+      const res  = await fetch(`/api/demos/${demoId}/generate-config`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Generation failed");
 
@@ -64,7 +59,7 @@ export function OutlinePanel({ demoId, demoConfig, canGenerate }: OutlinePanelPr
     }
   }
 
-  // ── Save ──────────────────────────────────────────────────────────────────
+  // ── Save ────────────────────────────────────────────────────────────────────
 
   async function handleSave() {
     if (!config) return;
@@ -73,9 +68,9 @@ export function OutlinePanel({ demoId, demoConfig, canGenerate }: OutlinePanelPr
 
     try {
       const res = await fetch(`/api/demos/${demoId}`, {
-        method: "PATCH",
+        method:  "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ demoConfig: config }),
+        body:    JSON.stringify({ demoConfig: config }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -95,7 +90,7 @@ export function OutlinePanel({ demoId, demoConfig, canGenerate }: OutlinePanelPr
     }
   }
 
-  // ── Scene mutation helpers ─────────────────────────────────────────────────
+  // ── Scene mutation helpers ───────────────────────────────────────────────────
 
   function updateScene(idx: number, patch: Partial<DemoScene>) {
     if (!config) return;
@@ -113,7 +108,7 @@ export function OutlinePanel({ demoId, demoConfig, canGenerate }: OutlinePanelPr
     setDirty(true);
   }
 
-  // ── Drag-and-drop state ───────────────────────────────────────────────────
+  // ── Drag-and-drop state ──────────────────────────────────────────────────────
 
   const dragIdx = useRef<number | null>(null);
 
@@ -132,7 +127,11 @@ export function OutlinePanel({ demoId, demoConfig, canGenerate }: OutlinePanelPr
     [config]
   );
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────────────────────
+
+  const totalSeconds = config
+    ? Math.round(config.scenes.reduce((s, sc) => s + sc.durationFrames, 0) / 30)
+    : 0;
 
   return (
     <div className="space-y-4">
@@ -215,9 +214,7 @@ export function OutlinePanel({ demoId, demoConfig, canGenerate }: OutlinePanelPr
           <div className="flex items-center gap-3 text-xs font-mono text-muted-fg">
             <span>{config.scenes.length} scenes</span>
             <span>·</span>
-            <span>
-              {config.scenes.reduce((s, sc) => s + sc.durationSeconds, 0)}s total
-            </span>
+            <span>~{totalSeconds}s total</span>
             <span>·</span>
             <span className="capitalize">{config.theme} theme</span>
             <span>·</span>
@@ -265,7 +262,7 @@ function SceneCard({
   onDrop,
 }: SceneCardProps) {
   const [dragOver, setDragOver] = useState(false);
-  const typeStyle = SCENE_TYPE_STYLES[scene.type];
+  const typeStyle = SCENE_TYPE_STYLES[scene.type] ?? SCENE_TYPE_STYLES["hook"];
 
   return (
     <div
@@ -292,8 +289,8 @@ function SceneCard({
               {typeStyle.label}
             </span>
             <DurationEditor
-              value={scene.durationSeconds}
-              onChange={(v) => onUpdate({ durationSeconds: v })}
+              frames={scene.durationFrames}
+              onChange={(v) => onUpdate({ durationFrames: v })}
             />
           </div>
 
@@ -318,79 +315,126 @@ function SceneCard({
           </div>
         </div>
 
-        {/* Headline — inline editable */}
-        <InlineEdit
-          value={scene.headline}
-          onChange={(v) => onUpdate({ headline: v })}
-          placeholder="Scene headline"
-          className="font-display font-bold text-base text-foreground w-full mb-2"
-        />
+        {/* Scene summary — read-only, showing the most relevant fields */}
+        <SceneSummary scene={scene} onUpdate={onUpdate} />
+      </div>
+    </div>
+  );
+}
 
-        {/* Body bullets */}
-        <div className="space-y-1.5">
-          {scene.body.map((line, i) => (
+// ─── Scene Summary ────────────────────────────────────────────────────────────
+
+/**
+ * Shows the most relevant editable fields for each scene type.
+ * Headline and overlayText are inline-editable across all types.
+ */
+function SceneSummary({
+  scene,
+  onUpdate,
+}: {
+  scene:    DemoScene;
+  onUpdate: (patch: Partial<DemoScene>) => void;
+}) {
+  // The "primary label" for each type
+  const primaryLabel =
+    scene.headline ??
+    scene.title ??
+    (scene.lines ? scene.lines.join(" / ") : undefined) ??
+    "";
+
+  return (
+    <div className="space-y-2">
+      {/* Primary label — editable */}
+      <InlineEdit
+        value={primaryLabel}
+        onChange={(v) => {
+          if (scene.type === "hook") {
+            // Update first line
+            const lines = [...(scene.lines ?? [])];
+            lines[0] = v;
+            onUpdate({ lines });
+          } else if (scene.type === "end-card") {
+            onUpdate({ title: v });
+          } else {
+            onUpdate({ headline: v });
+          }
+        }}
+        placeholder={
+          scene.type === "hook" ? "Opening line"
+          : scene.type === "end-card" ? "App name"
+          : "Scene headline"
+        }
+        className="font-display font-bold text-base text-foreground w-full"
+      />
+
+      {/* Type-specific secondary info */}
+      {scene.type === "hook" && scene.lines && scene.lines.length > 1 && (
+        <div className="space-y-1">
+          {scene.lines.slice(1).map((line, i) => (
             <div key={i} className="flex items-start gap-2">
               <span className="text-accent mt-0.5 shrink-0 text-xs">›</span>
               <InlineEdit
                 value={line}
                 onChange={(v) => {
-                  const body = [...scene.body];
-                  body[i] = v;
-                  onUpdate({ body });
+                  const lines = [...(scene.lines ?? [])];
+                  lines[i + 1] = v;
+                  onUpdate({ lines });
                 }}
-                placeholder="Bullet point"
+                placeholder="Line"
                 className="text-sm text-muted-fg font-mono flex-1"
               />
             </div>
           ))}
-          {scene.body.length < 3 && (
-            <button
-              onClick={() => onUpdate({ body: [...scene.body, ""] })}
-              className="text-xs text-muted-fg font-mono hover:text-accent transition-colors ml-4"
-            >
-              + Add bullet
-            </button>
-          )}
         </div>
+      )}
 
-        {/* Outro fields */}
-        {scene.type === "outro" && (
-          <div className="mt-3 space-y-2">
-            {scene.cta !== undefined && (
-              <div className="flex items-center gap-2">
-                <span className="text-muted-fg text-xs font-mono shrink-0">CTA:</span>
-                <InlineEdit
-                  value={scene.cta ?? ""}
-                  onChange={(v) => onUpdate({ cta: v })}
-                  placeholder="Call to action text"
-                  className="text-sm font-mono text-foreground flex-1"
-                />
-              </div>
-            )}
-            {scene.technicalNote !== undefined && (
-              <div className="flex items-center gap-2">
-                <span className="text-muted-fg text-xs font-mono shrink-0">Stack:</span>
-                <InlineEdit
-                  value={scene.technicalNote ?? ""}
-                  onChange={(v) => onUpdate({ technicalNote: v })}
-                  placeholder="Built with..."
-                  className="text-xs font-mono text-muted-fg flex-1"
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      {scene.type === "browser-flow" && scene.url && (
+        <p className="text-xs font-mono text-muted-fg truncate">{scene.url}</p>
+      )}
+
+      {scene.type === "code" && scene.filename && (
+        <p className="text-xs font-mono text-blue-400/70">{scene.filename}</p>
+      )}
+
+      {scene.type === "terminal" && scene.terminalLines && (
+        <p className="text-xs font-mono text-muted-fg">
+          {scene.terminalLines.length} terminal line{scene.terminalLines.length !== 1 ? "s" : ""}
+        </p>
+      )}
+
+      {scene.type === "comparison" && (
+        <p className="text-xs font-mono text-muted-fg">
+          {scene.leftTitle} vs {scene.rightTitle}
+        </p>
+      )}
+
+      {scene.type === "end-card" && scene.tagline && (
+        <InlineEdit
+          value={scene.tagline}
+          onChange={(v) => onUpdate({ tagline: v })}
+          placeholder="Tagline"
+          className="text-sm text-muted-fg font-mono w-full"
+        />
+      )}
+
+      {/* Overlay text (shown for most types) */}
+      {scene.overlayText !== undefined && (
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-muted-fg text-xs font-mono shrink-0">overlay:</span>
+          <InlineEdit
+            value={scene.overlayText ?? ""}
+            onChange={(v) => onUpdate({ overlayText: v })}
+            placeholder="Overlay caption"
+            className="text-xs font-mono text-muted-fg flex-1"
+          />
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Inline Edit ──────────────────────────────────────────────────────────────
 
-/**
- * A click-to-edit field that toggles between display text and an input.
- * Saves on blur or Enter key.
- */
 function InlineEdit({
   value,
   onChange,
@@ -403,9 +447,8 @@ function InlineEdit({
   className:   string;
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
+  const [draft, setDraft]     = useState(value);
 
-  // Keep draft in sync when the parent config is replaced (e.g., re-generate)
   useEffect(() => {
     if (!editing) setDraft(value);
   }, [value, editing]);
@@ -423,7 +466,7 @@ function InlineEdit({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          if (e.key === "Enter") commit();
+          if (e.key === "Enter")  commit();
           if (e.key === "Escape") { setDraft(value); setEditing(false); }
         }}
         placeholder={placeholder}
@@ -448,25 +491,27 @@ function InlineEdit({
 // ─── Duration Editor ──────────────────────────────────────────────────────────
 
 function DurationEditor({
-  value,
+  frames,
   onChange,
 }: {
-  value:    number;
+  frames:   number;
   onChange: (v: number) => void;
 }) {
+  const seconds = Math.round(frames / 30);
+
   return (
     <div className="flex items-center gap-1">
       <button
-        onClick={() => onChange(Math.max(1, value - 1))}
+        onClick={() => onChange(Math.max(60, frames - 30))}
         className="w-4 h-4 text-muted-fg hover:text-foreground text-xs transition-colors"
       >
         −
       </button>
-      <span className="text-xs font-mono text-muted-fg tabular-nums w-8 text-center">
-        {value}s
+      <span className="text-xs font-mono text-muted-fg tabular-nums w-10 text-center">
+        {seconds}s
       </span>
       <button
-        onClick={() => onChange(Math.min(30, value + 1))}
+        onClick={() => onChange(Math.min(300, frames + 30))}
         className="w-4 h-4 text-muted-fg hover:text-foreground text-xs transition-colors"
       >
         +
