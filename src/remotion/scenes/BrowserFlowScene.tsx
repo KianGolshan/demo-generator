@@ -1,15 +1,16 @@
-import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import type { BrowserStep } from "@/types";
 import type { Theme } from "../theme";
 import { spring, easeOutCubic } from "../shared/easing";
 import { BrowserMockup } from "../shared/BrowserMockup";
 
 interface BrowserFlowSceneProps {
-  url:          string;
-  steps:        BrowserStep[];
-  headline?:    string;
-  overlayText?: string;
-  theme:        Theme;
+  url:            string;
+  steps:          BrowserStep[];
+  headline?:      string;
+  overlayText?:   string;
+  screenshotUrl?: string;  // when provided, shows the real screenshot inside the browser chrome
+  theme:          Theme;
 }
 
 // ─── Browser content renderer ──────────────────────────────────────────────
@@ -389,10 +390,15 @@ export const BrowserFlowScene: React.FC<BrowserFlowSceneProps> = ({
   steps,
   headline,
   overlayText,
+  screenshotUrl,
   theme,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
+
+  // Ken Burns on screenshot
+  const zoom = interpolate(frame, [0, durationInFrames], [1.0, 1.06], { extrapolateRight: "clamp" });
+  const panX = interpolate(frame, [0, durationInFrames], [0, -20], { extrapolateRight: "clamp" });
 
   // Browser mockup entrance
   const browserS  = spring(frame, fps, { damping: 18, stiffness: 110 });
@@ -476,14 +482,57 @@ export const BrowserFlowScene: React.FC<BrowserFlowSceneProps> = ({
           }}
         >
           <BrowserMockup url={url} width="100%" height="100%">
-            <div
-              style={{
-                width:      "100%",
-                height:     "100%",
-                background: theme.bgSecondary,
-              }}
-            >
-              <BrowserContent steps={steps} frame={frame} fps={fps} theme={theme} />
+            <div style={{ width: "100%", height: "100%", background: theme.bgSecondary, overflow: "hidden", position: "relative" }}>
+              {screenshotUrl ? (
+                // Real screenshot mode — Ken Burns zoom inside browser chrome
+                <>
+                  <Img
+                    src={screenshotUrl}
+                    style={{
+                      width:           "100%",
+                      height:          "100%",
+                      objectFit:       "cover",
+                      objectPosition:  "top left",
+                      transform:       `scale(${zoom}) translateX(${panX}px)`,
+                      transformOrigin: "top left",
+                      display:         "block",
+                    }}
+                  />
+                  {/* Per-step caption overlay at bottom */}
+                  {steps.map((step, i) => {
+                    const isActive = frame >= step.frame && (i === steps.length - 1 || frame < steps[i + 1].frame);
+                    if (!isActive || !step.label) return null;
+                    const captionS = spring(Math.max(0, frame - step.frame), fps, { damping: 18, stiffness: 120 });
+                    return (
+                      <div
+                        key={i}
+                        style={{
+                          position:   "absolute",
+                          bottom:     "24px",
+                          left:       "50%",
+                          transform:  `translateX(-50%) translateY(${(1 - captionS) * 20}px)`,
+                          opacity:    captionS,
+                          background: "rgba(0,0,0,0.75)",
+                          backdropFilter: "blur(6px)",
+                          border:     `1px solid rgba(255,255,255,0.12)`,
+                          borderRadius: "10px",
+                          padding:    "10px 24px",
+                          color:      "#fff",
+                          fontSize:   "18px",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          fontFamily: "sans-serif",
+                        }}
+                      >
+                        {step.label}
+                      </div>
+                    );
+                  })}
+                </>
+              ) : (
+                // Simulated UI mode
+                <BrowserContent steps={steps} frame={frame} fps={fps} theme={theme} />
+              )}
             </div>
           </BrowserMockup>
         </div>

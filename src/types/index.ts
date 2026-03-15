@@ -67,7 +67,8 @@ export interface DemoScene {
 
   // ── browser-flow ──
   url?:   string;
-  steps?: BrowserStep[];
+  steps?:        BrowserStep[];
+  screenshotId?: string | null;
 
   // ── terminal ──
   terminalLines?: { text: string; isError?: boolean }[];

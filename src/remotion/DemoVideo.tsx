@@ -26,7 +26,7 @@ export interface DemoVideoProps {
  *
  * Supported scene types: hook | code | browser-flow | terminal | comparison | end-card
  */
-export const DemoVideo: React.FC<DemoVideoProps> = ({ config }) => {
+export const DemoVideo: React.FC<DemoVideoProps> = ({ config, screenshotUrls }) => {
   const theme = getTheme(config.theme);
 
   let frameOffset = 0;
@@ -69,6 +69,11 @@ export const DemoVideo: React.FC<DemoVideoProps> = ({ config }) => {
                 steps={scene.steps ?? []}
                 headline={scene.headline}
                 overlayText={scene.overlayText}
+                screenshotUrl={
+                  scene.screenshotId != null
+                    ? screenshotUrls[parseInt(scene.screenshotId, 10)]
+                    : undefined
+                }
                 theme={theme}
               />
             )}
