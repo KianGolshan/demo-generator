@@ -118,7 +118,7 @@ export function GenerateCompositionPanel({ demoId, hasRepoAnalysis, hasGenerated
           <p className="text-muted-fg text-xs font-mono mb-3">
             You&apos;ve used your 1 free generation. Add your Anthropic API key in Settings to keep creating demos.
           </p>
-          <Link href="/settings" className="btn-primary text-sm py-2 px-4">
+          <Link href={`/settings?from=${demoId}`} className="btn-primary text-sm py-2 px-4">
             Add API key →
           </Link>
         </div>

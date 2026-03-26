@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 
-export function ApiKeyForm({ hasApiKey }: { hasApiKey: boolean }) {
+export function ApiKeyForm({ hasApiKey, returnTo }: { hasApiKey: boolean; returnTo?: string }) {
   const router = useRouter();
   const toast = useToast();
   const [key, setKey] = useState("");
@@ -27,7 +27,11 @@ export function ApiKeyForm({ hasApiKey }: { hasApiKey: boolean }) {
       setSaved(true);
       setKey("");
       toast("API key saved — you can now generate unlimited demos.", "success");
-      router.refresh();
+      if (returnTo) {
+        router.push(returnTo);
+      } else {
+        router.refresh();
+      }
     } catch (err) {
       toast(err instanceof Error ? err.message : "Save failed", "error");
     } finally {

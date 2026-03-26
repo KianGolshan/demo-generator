@@ -13,9 +13,26 @@ export async function generateMetadata({ params }: RouteProps): Promise<Metadata
     select: { projectName: true, tagline: true },
   });
   if (!demo) return { title: "Demo" };
+
+  const title = `${demo.projectName} — Demo`;
+  const description = demo.tagline || "Watch this product demo built with DemoForge.";
+  const ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/og?title=${encodeURIComponent(demo.projectName)}&sub=${encodeURIComponent(demo.tagline ?? "")}`;
+
   return {
-    title: `${demo.projectName} — Demo`,
-    description: demo.tagline || undefined,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: [{ url: ogImageUrl, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImageUrl],
+    },
   };
 }
 

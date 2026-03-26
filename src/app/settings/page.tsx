@@ -4,12 +4,16 @@ import { Nav } from "@/components/Nav";
 import { ApiKeyForm } from "@/components/ApiKeyForm";
 import { getUserProfile } from "@/lib/userProfile";
 
-export default async function SettingsPage() {
+type Props = { searchParams: Promise<{ from?: string }> };
+
+export default async function SettingsPage({ searchParams }: Props) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const profile = await getUserProfile(user.id);
+  const { from } = await searchParams;
+  const returnTo = from ? `/demos/${from}` : undefined;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -56,7 +60,7 @@ export default async function SettingsPage() {
               </a>
               . Your key is encrypted at rest and never exposed to the browser.
             </p>
-            <ApiKeyForm hasApiKey={!!profile?.anthropicApiKey} />
+            <ApiKeyForm hasApiKey={!!profile?.anthropicApiKey} returnTo={returnTo} />
           </section>
         </div>
       </main>

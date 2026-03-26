@@ -117,17 +117,42 @@ async function runGeneratedRender({
   generatedCode:  string;
   screenshotUrls: string[];
 }) {
-  const tmpDir     = os.tmpdir();
-  const outputPath = path.join(tmpDir, `demoforge-gen-${demoId}.mp4`);
-  const genDemoPath = path.resolve(process.cwd(), "src/remotion/GeneratedDemo.tsx");
+  const tmpDir      = os.tmpdir();
+  const outputPath  = path.join(tmpDir, `demoforge-gen-${demoId}.mp4`);
+  // Per-demo files prevent concurrent renders from clobbering each other
+  const remotionDir  = path.resolve(process.cwd(), "src/remotion");
+  const genDemoPath  = path.join(remotionDir, `GeneratedDemo-${demoId}.tsx`);
+  const genEntryPath = path.join(remotionDir, `generated-entry-${demoId}.tsx`);
 
   try {
     console.log(`[render:generated] Starting generated render for demo ${demoId}`);
     const start = Date.now();
 
-    // 1. Write generated code to src/remotion/GeneratedDemo.tsx
+    // 1. Write per-demo files — isolated so concurrent renders don't collide
     await fs.writeFile(genDemoPath, generatedCode, "utf-8");
-    console.log("[render:generated] Wrote GeneratedDemo.tsx");
+
+    const entryContent = `import React from "react";
+import { registerRoot } from "remotion";
+import { Composition } from "remotion";
+import { GeneratedDemo, GENERATED_DURATION, GENERATED_FPS, GENERATED_WIDTH, GENERATED_HEIGHT } from "./GeneratedDemo-${demoId}";
+
+const Root: React.FC = () => (
+  <Composition
+    id="GeneratedDemo"
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    component={GeneratedDemo as any}
+    durationInFrames={GENERATED_DURATION}
+    fps={GENERATED_FPS}
+    width={GENERATED_WIDTH}
+    height={GENERATED_HEIGHT}
+    defaultProps={{ screenshotUrls: [] }}
+  />
+);
+
+registerRoot(Root);
+`;
+    await fs.writeFile(genEntryPath, entryContent, "utf-8");
+    console.log(`[render:generated] Wrote per-demo files for ${demoId}`);
 
     // 2. Dynamically import Remotion modules
     const [{ bundle }, { selectComposition, renderMedia }] = await Promise.all([
@@ -135,7 +160,7 @@ async function runGeneratedRender({
       import("@remotion/renderer"),
     ]);
 
-    const entryPoint = path.resolve(process.cwd(), "src/remotion/generated-entry.ts");
+    const entryPoint = genEntryPath;
 
     // 3. Bundle the generated composition
     console.log("[render:generated] Bundling generated composition...");
@@ -211,6 +236,8 @@ async function runGeneratedRender({
     });
   } finally {
     await fs.unlink(outputPath).catch(() => {});
+    await fs.unlink(genDemoPath).catch(() => {});
+    await fs.unlink(genEntryPath).catch(() => {});
   }
 }
 

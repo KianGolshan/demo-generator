@@ -79,7 +79,7 @@ export function IteratePanel({ demoId, hasGeneratedCode }: Props) {
           <p className="text-muted-fg text-xs font-mono mb-3">
             Iterations use your own Anthropic API key. Add it in Settings to continue.
           </p>
-          <Link href="/settings" className="btn-primary text-sm py-2 px-4">
+          <Link href={`/settings?from=${demoId}`} className="btn-primary text-sm py-2 px-4">
             Go to Settings →
           </Link>
         </div>

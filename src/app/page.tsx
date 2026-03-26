@@ -85,6 +85,68 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing */}
+      <section id="pricing" className="px-6 py-20 border-t border-border bg-muted/20">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="font-display text-3xl font-bold mb-4">Simple pricing</h2>
+          <p className="text-muted-fg text-sm font-mono mb-12">
+            No subscriptions. Bring your own Anthropic key and pay only for what you use.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
+            {/* Free tier */}
+            <div className="glass-card p-8">
+              <div className="font-mono text-accent text-xs mb-4">FREE</div>
+              <div className="font-display text-3xl font-bold mb-1">$0</div>
+              <p className="text-muted-fg text-sm font-mono mb-6">to get started</p>
+              <ul className="space-y-3 text-sm font-mono text-muted-fg">
+                {[
+                  "1 free demo generation",
+                  "Full repo analysis",
+                  "MP4 download",
+                  "Public share link",
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-2">
+                    <span className="text-accent">✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/login" className="btn-primary w-full text-center mt-8 block">
+                Start for free →
+              </Link>
+            </div>
+
+            {/* BYOK tier */}
+            <div className="glass-card p-8 border-accent/30">
+              <div className="font-mono text-accent text-xs mb-4">BYOK</div>
+              <div className="font-display text-3xl font-bold mb-1">~$0.50</div>
+              <p className="text-muted-fg text-sm font-mono mb-6">per video with your Anthropic key</p>
+              <ul className="space-y-3 text-sm font-mono text-muted-fg">
+                {[
+                  "Unlimited generations",
+                  "Unlimited iterations",
+                  "Your key, your cost",
+                  "No markup, no subscription",
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-2">
+                    <span className="text-accent">✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="https://console.anthropic.com/settings/keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-ghost w-full text-center mt-8 block text-sm"
+              >
+                Get an Anthropic key →
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="px-8 py-6 border-t border-border flex items-center justify-between text-muted-fg text-xs font-mono">
         <span>DemoForge</span>
