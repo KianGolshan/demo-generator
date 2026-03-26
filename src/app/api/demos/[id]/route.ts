@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import type { ApiError } from "@/types";
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -9,7 +9,7 @@ const PatchDemoSchema = z.object({
   projectName: z.string().min(1).max(100).optional(),
   tagline:     z.string().max(200).optional(),
   description: z.string().max(2000).optional(),
-  sourceType:  z.enum(["url", "screenshots", "repo+url", "repo+screenshots"]).optional(),
+  sourceType:  z.enum(["url", "screenshots", "repo", "repo+url", "repo+screenshots"]).optional(),
   sourceUrl:   z.string().url().optional().nullable(),
   stylePreset: z.enum(["clean", "cyber", "playful"]).optional(),
   features:    z.array(z.object({ title: z.string(), description: z.string() })).optional(),
@@ -120,10 +120,6 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 }
 
-/**
- * DELETE /api/demos/[id]
- * Permanently deletes a DemoProject. Only the owning user can delete.
- */
 export async function DELETE(_req: NextRequest, { params }: RouteContext) {
   try {
     const { id } = await params;
@@ -139,6 +135,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
 
     const existing = await prisma.demoProject.findFirst({
       where: { id, userId: user.id },
+      select: { id: true, userId: true },
     });
 
     if (!existing) {
@@ -148,7 +145,28 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
       );
     }
 
+    // Delete DB row first
     await prisma.demoProject.delete({ where: { id } });
+
+    // Best-effort storage cleanup (don't fail the request if this errors)
+    try {
+      const adminClient = createAdminClient();
+      const prefix = `${existing.userId}/${id}`;
+
+      const { data: screenshotFiles } = await adminClient.storage
+        .from("screenshots")
+        .list(`${prefix}`);
+      if (screenshotFiles?.length) {
+        await adminClient.storage
+          .from("screenshots")
+          .remove(screenshotFiles.map((f) => `${prefix}/${f.name}`));
+      }
+
+      await adminClient.storage.from("videos").remove([`${prefix}/demo.mp4`]);
+    } catch (storageErr) {
+      console.warn("[DELETE demo] Storage cleanup failed (non-fatal):", storageErr);
+    }
+
     return new NextResponse(null, { status: 204 });
   } catch (err) {
     console.error("[DELETE /api/demos/[id]]", err);

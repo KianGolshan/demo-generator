@@ -104,7 +104,7 @@ export interface DemoConfig {
 
 export type StylePreset = "clean" | "cyber" | "playful";
 export type AspectRatio = "16:9" | "9:16";
-export type SourceType  = "url" | "screenshots" | "repo+url" | "repo+screenshots";
+export type SourceType  = "url" | "screenshots" | "repo" | "repo+url" | "repo+screenshots";
 export type RenderStatus = "draft" | "config_generated" | "rendering" | "ready" | "failed";
 
 export interface ProjectFeature {

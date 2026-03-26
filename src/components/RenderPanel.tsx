@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { RenderStatus } from "@/types";
 
 type RenderPanelProps = {
-  demoId:       string;
+  demoId:        string;
   initialStatus: RenderStatus;
   initialVideoUrl?: string;
 };
@@ -198,7 +198,7 @@ export function RenderPanel({ demoId, initialStatus, initialVideoUrl }: RenderPa
             className="w-full rounded-xl border border-border bg-muted"
             style={{ maxHeight: "480px" }}
           />
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <a
               href={videoUrl}
               download="demo.mp4"
@@ -210,7 +210,16 @@ export function RenderPanel({ demoId, initialStatus, initialVideoUrl }: RenderPa
               onClick={() => navigator.clipboard.writeText(videoUrl)}
               className="btn-ghost text-sm py-2 px-3"
             >
-              Copy link
+              Copy video link
+            </button>
+            <button
+              onClick={() => {
+                const shareUrl = `${window.location.origin}/share/${demoId}`;
+                navigator.clipboard.writeText(shareUrl);
+              }}
+              className="btn-ghost text-sm py-2 px-3"
+            >
+              Copy share page
             </button>
           </div>
         </div>

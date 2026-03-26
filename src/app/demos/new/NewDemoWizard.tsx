@@ -67,7 +67,7 @@ export function NewDemoWizard() {
     projectName: "",
     tagline: "",
     description: "",
-    sourceType: "screenshots",
+    sourceType: "repo",
     sourceUrl: "",
     screenshots: [],
     stylePreset: "clean",
@@ -278,14 +278,14 @@ function Step1({
         />
       </Field>
 
-      <Field label="What are you providing?" hint="Choose how you'll show the app">
-        <div className="grid grid-cols-2 gap-3 mt-1">
+      <Field label="What are you providing?" hint="GitHub repo gives the best results — Claude reads your actual code">
+        <div className="grid grid-cols-1 gap-3 mt-1">
           {(
             [
-              { value: "screenshots", label: "Screenshots", icon: "🖼️", desc: "Upload up to 6 images" },
-              { value: "url",         label: "Live URL",    icon: "🔗", desc: "Paste your app URL" },
-              { value: "repo+screenshots", label: "Repo + Screenshots", icon: "⚡", desc: "Best results" },
-              { value: "repo+url",    label: "Repo + URL",  icon: "🚀", desc: "Full analysis" },
+              { value: "repo",         label: "GitHub Repo",               icon: "⚡", desc: "Best results — Claude reads your codebase. Screenshots optional." },
+              { value: "repo+screenshots", label: "GitHub Repo + Screenshots", icon: "🚀", desc: "Repo analysis + screenshots as visual reference" },
+              { value: "screenshots",  label: "Screenshots only",           icon: "🖼️", desc: "Upload up to 6 images of your app" },
+              { value: "url",          label: "Live URL",                   icon: "🔗", desc: "Paste your app URL" },
             ] as { value: SourceType; label: string; icon: string; desc: string }[]
           ).map((opt) => (
             <button
@@ -299,9 +299,13 @@ function Step1({
                   : "border-border bg-muted/50 text-muted-fg hover:border-accent/50"}
               `}
             >
-              <div className="text-lg mb-1">{opt.icon}</div>
-              <div className="font-display text-sm font-bold">{opt.label}</div>
-              <div className="text-xs font-mono opacity-70">{opt.desc}</div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{opt.icon}</span>
+                <div>
+                  <div className="font-display text-sm font-bold">{opt.label}</div>
+                  <div className="text-xs font-mono opacity-70">{opt.desc}</div>
+                </div>
+              </div>
             </button>
           ))}
         </div>
@@ -333,8 +337,11 @@ function Step2({
   onNext: () => void;
   onBack: () => void;
 }) {
+  // "repo" = screenshots optional, "repo+screenshots" = screenshots shown prominently but not required
+  const isRepoOnly      = state.sourceType === "repo";
   const needsScreenshots = state.sourceType.includes("screenshots");
-  const needsUrl = state.sourceType.includes("url");
+  const needsUrl         = state.sourceType.includes("url");
+  const screenshotsOptional = isRepoOnly;
 
   function handleNext(e: React.FormEvent) {
     e.preventDefault();
@@ -344,9 +351,13 @@ function Step2({
   return (
     <form onSubmit={handleNext} className="space-y-5 stagger-children">
       <div>
-        <h2 className="font-display text-2xl font-bold mb-1">Add your source</h2>
+        <h2 className="font-display text-2xl font-bold mb-1">
+          {isRepoOnly ? "Add screenshots (optional)" : "Add your source"}
+        </h2>
         <p className="text-muted-fg text-sm font-mono">
-          {needsScreenshots && needsUrl
+          {isRepoOnly
+            ? "Claude reads your GitHub repo code directly — screenshots are optional visual reference only. Skip this step if you don't have any."
+            : needsScreenshots && needsUrl
             ? "Upload screenshots and paste your app URL."
             : needsScreenshots
             ? "Upload up to 6 screenshots of your app in action."
@@ -354,11 +365,18 @@ function Step2({
         </p>
       </div>
 
-      {needsScreenshots && (
-        <ScreenshotUploader
-          files={state.screenshots}
-          onChange={(files) => update({ screenshots: files })}
-        />
+      {(needsScreenshots || isRepoOnly) && (
+        <div>
+          {screenshotsOptional && (
+            <p className="text-muted-fg text-xs font-mono mb-2">
+              Screenshots (optional — visual reference for Claude)
+            </p>
+          )}
+          <ScreenshotUploader
+            files={state.screenshots}
+            onChange={(files) => update({ screenshots: files })}
+          />
+        </div>
       )}
 
       {needsUrl && (
@@ -377,16 +395,23 @@ function Step2({
         <button type="button" onClick={onBack} className="btn-ghost">
           ← Back
         </button>
-        <button
-          type="submit"
-          className="btn-primary"
-          disabled={
-            (needsScreenshots && state.screenshots.length === 0 && !needsUrl) ||
-            (needsUrl && !state.sourceUrl && !needsScreenshots)
-          }
-        >
-          Continue →
-        </button>
+        <div className="flex gap-2">
+          {isRepoOnly && (
+            <button type="button" onClick={onNext} className="btn-ghost">
+              Skip →
+            </button>
+          )}
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={
+              (!isRepoOnly && needsScreenshots && state.screenshots.length === 0 && !needsUrl) ||
+              (needsUrl && !state.sourceUrl && !needsScreenshots && !isRepoOnly)
+            }
+          >
+            {isRepoOnly && state.screenshots.length > 0 ? "Continue →" : isRepoOnly ? "Continue anyway →" : "Continue →"}
+          </button>
+        </div>
       </div>
     </form>
   );

@@ -8,7 +8,7 @@ const CreateDemoSchema = z.object({
   projectName: z.string().min(1).max(100),
   tagline:     z.string().max(200).default(""),
   description: z.string().max(2000).default(""),
-  sourceType:  z.enum(["url", "screenshots", "repo+url", "repo+screenshots"]),
+  sourceType:  z.enum(["url", "screenshots", "repo", "repo+url", "repo+screenshots"]),
   sourceUrl:   z.string().url().optional(),
   stylePreset: z.enum(["clean", "cyber", "playful"]).default("clean"),
   aspectRatio: z.enum(["16:9", "9:16"]).default("16:9"),

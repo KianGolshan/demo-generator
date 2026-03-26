@@ -31,15 +31,18 @@ export async function callClaude({
   user,
   model = "claude-sonnet-4-6",
   maxTokens = 2000,
+  apiKey,
 }: {
   system: string;
   user: string;
   model?: string;
   maxTokens?: number;
+  apiKey?: string;
 }): Promise<string> {
   const start = Date.now();
+  const client = apiKey ? new Anthropic({ apiKey }) : anthropic;
 
-  const message = await anthropic.messages.create({
+  const message = await client.messages.create({
     model,
     max_tokens: maxTokens,
     system,

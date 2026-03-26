@@ -8,6 +8,7 @@ import { RepoPanel } from "@/components/RepoPanel";
 import { OutlinePanel } from "@/components/OutlinePanel";
 import { RenderPanel } from "@/components/RenderPanel";
 import { GenerateCompositionPanel } from "@/components/GenerateCompositionPanel";
+import { IteratePanel } from "@/components/IteratePanel";
 import type { DemoProject, RenderStatus } from "@/types";
 import Link from "next/link";
 
@@ -106,6 +107,9 @@ export default async function DemoDetailPage({ params }: RouteProps) {
 
           {/* Generate Demo (code-gen pipeline) — primary path when repo is analyzed */}
           <GenerateCompositionSection demo={demo} />
+
+          {/* Iterate on the generated demo */}
+          <IteratePanel demoId={demo.id} hasGeneratedCode={!!demo.generatedCode} />
 
           {/* Generate outline (JSON config pipeline) — alternative / screenshot-only path */}
           <OutlinePanelSection demo={demo} />
@@ -208,6 +212,9 @@ function ScreenshotsPanel({ urls }: { urls: string[] }) {
 // ─── Repo Panel (wired to RepoPanel client component) ────────────────────────
 
 function RepoPanelSection({ demo }: { demo: DemoProject }) {
+  const hasRepo = demo.sourceType === "repo" || demo.sourceType.includes("repo");
+  if (!hasRepo) return null;
+
   const hasAnalysis = !!demo.codeSummary;
 
   return (
@@ -230,8 +237,8 @@ function RepoPanelSection({ demo }: { demo: DemoProject }) {
 // ─── Generate Composition Section ────────────────────────────────────────────
 
 function GenerateCompositionSection({ demo }: { demo: DemoProject }) {
-  // Only show when there's a repo source type — this is the code-gen path
-  const hasRepo = demo.sourceType.includes("repo");
+  // Show for any source type that includes repo analysis
+  const hasRepo = demo.sourceType === "repo" || demo.sourceType.includes("repo");
   if (!hasRepo) return null;
 
   return (
@@ -253,6 +260,7 @@ function GenerateCompositionSection({ demo }: { demo: DemoProject }) {
         demoId={demo.id}
         hasRepoAnalysis={!!demo.codeSummary}
         hasGeneratedCode={!!demo.generatedCode}
+        generatedCode={demo.generatedCode}
       />
     </section>
   );

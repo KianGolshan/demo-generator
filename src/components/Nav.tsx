@@ -31,6 +31,12 @@ export async function Nav() {
           >
             Dashboard
           </Link>
+          <Link
+            href="/settings"
+            className="px-3 py-1.5 rounded-md text-muted-fg text-sm font-mono hover:text-foreground hover:bg-muted transition-colors"
+          >
+            Settings
+          </Link>
         </nav>
       </div>
 

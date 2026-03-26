@@ -39,6 +39,7 @@ h3 { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 6px; text
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
 
 /* ── Callout boxes ── */
 .callout-info {
@@ -48,6 +49,14 @@ h3 { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 6px; text
 .callout-warn {
   background: #fef3c7; border: 1.5px solid #fbbf24; border-radius: 8px;
   padding: 14px 18px; margin-top: 16px; font-size: 13px; color: #92400e;
+}
+.callout-danger {
+  background: #fee2e2; border: 1.5px solid #fca5a5; border-radius: 8px;
+  padding: 14px 18px; margin-top: 16px; font-size: 13px; color: #991b1b;
+}
+.callout-success {
+  background: #dcfce7; border: 1.5px solid #86efac; border-radius: 8px;
+  padding: 14px 18px; margin-top: 16px; font-size: 13px; color: #166534;
 }
 
 /* ── Badge / pill ── */
@@ -61,6 +70,7 @@ h3 { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 6px; text
 .badge-orange  { background: #ffedd5; color: #c2410c; }
 .badge-gray    { background: #f1f5f9; color: #475569; }
 .badge-pink    { background: #fce7f3; color: #be185d; }
+.badge-red     { background: #fee2e2; color: #991b1b; }
 
 /* ── Flow diagram ── */
 .flow {
@@ -72,6 +82,7 @@ h3 { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 6px; text
   padding: 10px 16px; font-size: 13px; font-weight: 600; color: #0f172a;
   white-space: nowrap;
 }
+.flow-step.new { border-color: #a5b4fc; background: #eef2ff; color: #3730a3; }
 .flow-arrow {
   color: #94a3b8; font-size: 18px; padding: 0 6px; font-weight: 300;
 }
@@ -111,6 +122,7 @@ tr:hover td { background: #fafafa; }
 .tree { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; line-height: 2; }
 .tree .dir  { color: #4f46e5; font-weight: 600; }
 .tree .file { color: #0f172a; }
+.tree .file.new { color: #15803d; font-weight: 600; }
 .tree .desc { color: #94a3b8; margin-left: 12px; font-size: 11px; }
 
 /* ── Stat boxes ── */
@@ -118,17 +130,12 @@ tr:hover td { background: #fafafa; }
 .stat-num  { font-size: 32px; font-weight: 800; color: #4f46e5; letter-spacing: -0.03em; }
 .stat-label { font-size: 12px; color: #64748b; margin-top: 2px; }
 
-/* ── Scene type cards ── */
-.scene-intro   { border-top: 3px solid #6366f1; }
-.scene-feature { border-top: 3px solid #22c55e; }
-.scene-outro   { border-top: 3px solid #f59e0b; }
-
 /* ── Divider ── */
 hr { border: none; border-top: 1.5px solid #e2e8f0; margin: 32px 0; }
 
 /* ── Responsive ── */
 @media (max-width: 700px) {
-  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; }
   h1 { font-size: 26px; }
 }
 </style>
@@ -139,28 +146,32 @@ hr { border: none; border-top: 1.5px solid #e2e8f0; margin: 32px 0; }
   <!-- ── Header ── -->
   <h1>Demo<span>Forge</span></h1>
   <p class="subtitle">
-    AI-powered product demo video generator — screenshots + GitHub repo → polished 30–90s MP4.<br>
-    Built with Next.js 14 · Claude AI · Remotion v4 · Supabase · Prisma 7
+    Point a GitHub repo at it. Get a polished 40–65s MP4 product demo video — no editor, no designer, no recording.<br>
+    Built with Next.js 14 · Claude <code>claude-sonnet-4-6</code> · Remotion v4 · Supabase · Prisma 7
   </p>
 
   <!-- ── Stats ── -->
   <div class="section">
-    <div class="grid-4">
-      <div class="card stat-box">
-        <div class="stat-num">2</div>
-        <div class="stat-label">Claude API calls per demo</div>
-      </div>
+    <div class="grid-5">
       <div class="card stat-box">
         <div class="stat-num">3</div>
-        <div class="stat-label">Remotion scene types</div>
+        <div class="stat-label">Claude calls per demo</div>
       </div>
       <div class="card stat-box">
-        <div class="stat-num">9</div>
+        <div class="stat-num">12</div>
         <div class="stat-label">API routes</div>
+      </div>
+      <div class="card stat-box">
+        <div class="stat-num">8000</div>
+        <div class="stat-label">Max tokens for video code</div>
       </div>
       <div class="card stat-box">
         <div class="stat-num">30</div>
         <div class="stat-label">FPS render output</div>
+      </div>
+      <div class="card stat-box">
+        <div class="stat-num">1</div>
+        <div class="stat-label">Free generation per user</div>
       </div>
     </div>
   </div>
@@ -173,31 +184,108 @@ hr { border: none; border-top: 1.5px solid #e2e8f0; margin: 32px 0; }
       <div class="flow-arrow">→</div>
       <div class="flow-step">Create demo wizard</div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step">Upload screenshots / analyze repo</div>
+      <div class="flow-step">Analyze GitHub repo</div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step">Generate AI outline</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step">Edit scenes inline</div>
+      <div class="flow-step">Generate TSX video code</div>
       <div class="flow-arrow">→</div>
       <div class="flow-step">Render MP4</div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step">Download / share</div>
+      <div class="flow-step new">Iterate (BYOK)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step new">Share page</div>
     </div>
 
     <div class="grid-3" style="margin-top: 20px;">
       <div class="card">
-        <h3>Step 1 — Ingest</h3>
-        <p>3-step wizard captures project name, tagline, description, source type, screenshots (up to 6), URL, and style preset. Screenshots upload to Supabase Storage immediately.</p>
+        <h3>Step 1 — Wizard (3 steps)</h3>
+        <p>Name, tagline, description. Source type selection — <strong>GitHub Repo</strong> (default), Repo + Screenshots, Screenshots only, Live URL. Optional screenshot upload (visual reference only). Style preset (clean/cyber/playful) + aspect ratio (16:9 / 9:16).</p>
       </div>
       <div class="card">
-        <h3>Step 2 — Analyze + Outline</h3>
-        <p>Optional: GitHub repo tree traversal scores and ranks files by relevance, then Claude extracts the tech stack, features, AI usage, and routes. Claude then generates a full scene-by-scene outline.</p>
+        <h3>Step 2 — Analyze + Generate</h3>
+        <p>Octokit fetches top 25 repo files — always includes README + package.json. Claude extracts stack, features, routes. Then Claude writes a <strong>complete custom Remotion TSX file</strong> — not templates, real code for that specific app using exact field names from the codebase.</p>
       </div>
       <div class="card">
-        <h3>Step 3 — Render</h3>
-        <p>Remotion bundles the composition, renders each scene as animated frames, and outputs an MP4 to <code>/tmp/</code>. The file is then uploaded to Supabase Storage and the URL saved to the DB.</p>
+        <h3>Step 3 — Render + Iterate</h3>
+        <p>Remotion bundles the generated TSX and renders an MP4 to <code>/tmp/</code>, uploaded to Supabase Storage. User can then describe changes in plain English → Claude rewrites the TSX → re-render. Iterations require the user's own Anthropic API key.</p>
       </div>
     </div>
+  </div>
+
+  <!-- ── The Core Pipeline ── -->
+  <div class="section">
+    <h2>The Core: Claude Writes Remotion TSX</h2>
+    <div class="callout-info">
+      <strong>Go-Git-It methodology:</strong> Before writing a single line of code, Claude extracts exact field names, column headers, button labels, domain terminology, and visual structure from the code snippets. Then it builds app-specific UI components that simulate the real interface — not generic templates.
+    </div>
+    <pre><code>// generate-composition prompt (condensed)
+// STEP 1: Extract from code snippets
+//   - Exact text labels for every input, button, column header, tab
+//   - Real data types (e.g. "cusip", "fairValue" — not "id", "value")
+//   - Visual structure: tabs? sidebar? search form? results table?
+// STEP 2: Build app-specific components
+//   - AppChrome (nav bar with real app terminology)
+//   - SearchBar (with real placeholder text + button label)
+//   - DataTable (with real column names + realistic domain data)
+// STEP 3: Assemble 5–7 scenes into GeneratedDemo
+//   - Hook → Product scenes → Comparison → End card
+//   - All spring-animated, 40–65s total
+
+export const GeneratedDemo: React.FC&lt;{ screenshotUrls: string[] }&gt; = () => {
+  // 1000+ lines of app-specific, frame-driven animation code
+};</code></pre>
+    <div class="grid-2" style="margin-top: 16px;">
+      <div class="card">
+        <h3>Scene Structure (5–7 scenes)</h3>
+        <hr style="margin: 8px 0;">
+        <table>
+          <tr><td><span class="badge badge-purple">Hook</span></td><td>75–90 frames · Full-screen animated hook headline, 3 feature badges</td></tr>
+          <tr><td><span class="badge badge-blue">Product ×2–4</span></td><td>180–240 frames each · Search → results → table rows springing in</td></tr>
+          <tr><td><span class="badge badge-orange">Comparison</span></td><td>120–150 frames · "The old way" vs "With [App]" side by side</td></tr>
+          <tr><td><span class="badge badge-green">End card</span></td><td>90–120 frames · App icon, tagline, floating particles, feature badges</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Animation Patterns</h3>
+        <hr style="margin: 8px 0;">
+        <p style="margin-bottom: 8px;"><strong>Spring entrance:</strong> <code>spring({ frame, fps, config: { damping: 14, stiffness: 120 } })</code></p>
+        <p style="margin-bottom: 8px;"><strong>Staggered rows:</strong> Each row delayed by 16 frames, <code>translateX</code> spring-in</p>
+        <p style="margin-bottom: 8px;"><strong>Button click:</strong> Press (scale 1→0.95→1) + ripple (opacity 0.5→0) over 18 frames</p>
+        <p style="margin-bottom: 8px;"><strong>Typing:</strong> <code>QUERY.slice(0, Math.floor(frame * 0.35))</code></p>
+        <p><strong>Particles:</strong> 22 dots orbiting center at <code>frame * 0.013</code> rad/frame</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BYOK System ── -->
+  <div class="section">
+    <h2>BYOK — Bring Your Own Key</h2>
+    <div class="grid-3">
+      <div class="card">
+        <h3>Free Tier</h3>
+        <hr style="margin: 8px 0;">
+        <p>Each user gets <strong>1 free generation</strong> (analyze + generate). The app's own <code>ANTHROPIC_API_KEY</code> is used. A Prisma transaction atomically reserves the slot to prevent TOCTOU races.</p>
+      </div>
+      <div class="card">
+        <h3>API Key Storage</h3>
+        <hr style="margin: 8px 0;">
+        <p>User keys are encrypted with <strong>AES-256-GCM</strong> using <code>API_KEY_ENCRYPTION_SECRET</code> before writing to <code>user_profiles.anthropicApiKey</code>. The plaintext key never touches the DB.</p>
+      </div>
+      <div class="card">
+        <h3>Iteration Gate</h3>
+        <hr style="margin: 8px 0;">
+        <p>The <code>/iterate</code> endpoint <strong>always</strong> requires the user's own API key — it never falls back to the app key. If no key is set, the UI shows a prompt to go to Settings.</p>
+      </div>
+    </div>
+    <pre style="margin-top: 16px;"><code>// userProfile.ts — atomic free generation reservation
+await prisma.$transaction(async (tx) => {
+  const profile = await tx.userProfile.findUnique({ where: { id: userId } });
+  if ((profile?.freeGenerationsUsed ?? 0) >= 1) throw new Error("FREE_GENERATION_EXHAUSTED");
+  await tx.userProfile.upsert({
+    where:  { id: userId },
+    update: { freeGenerationsUsed: { increment: 1 } },
+    create: { id: userId, freeGenerationsUsed: 1 },
+  });
+});</code></pre>
   </div>
 
   <!-- ── Architecture ── -->
@@ -207,9 +295,9 @@ hr { border: none; border-top: 1.5px solid #e2e8f0; margin: 32px 0; }
       <div class="card">
         <h3>Frontend (Next.js App Router)</h3>
         <hr style="margin: 10px 0;">
-        <p style="margin-bottom: 10px;">Server Components fetch data directly from Prisma. Client Components handle all interactive state (wizard, outline editor, polling).</p>
-        <p><span class="badge badge-purple">Server</span> Dashboard, demo detail page, Nav</p>
-        <p style="margin-top: 6px;"><span class="badge badge-blue">Client</span> Wizard, OutlinePanel, RepoPanel, RenderPanel, DemoPlayer</p>
+        <p style="margin-bottom: 10px;">Server Components fetch data directly from Prisma. Client Components handle all interactive state.</p>
+        <p><span class="badge badge-purple">Server</span> Dashboard, demo detail, settings, share page, Nav</p>
+        <p style="margin-top: 6px;"><span class="badge badge-blue">Client</span> Wizard, RepoPanel, GenerateCompositionPanel, IteratePanel, RenderPanel, ApiKeyForm</p>
         <div class="callout-info" style="margin-top: 12px;">
           <code>DemoPlayer</code> is dynamically imported with <code>ssr: false</code> — Remotion's player uses browser APIs unavailable during SSR.
         </div>
@@ -217,44 +305,55 @@ hr { border: none; border-top: 1.5px solid #e2e8f0; margin: 32px 0; }
       <div class="card">
         <h3>Backend (API Routes)</h3>
         <hr style="margin: 10px 0;">
-        <p style="margin-bottom: 10px;">All mutations go through typed API routes. Each route verifies Supabase auth and demo ownership before operating.</p>
-        <p><span class="badge badge-green">Prisma 7</span> PrismaPg adapter with connection pooling via Supabase Transaction pooler (port 6543)</p>
-        <p style="margin-top: 6px;"><span class="badge badge-orange">Render</span> Background <code>void runRender()</code> task detached from HTTP response — client polls status endpoint</p>
+        <p style="margin-bottom: 10px;">All mutations go through typed API routes. Every route verifies Supabase auth and demo ownership before operating.</p>
+        <p><span class="badge badge-green">Prisma 7</span> PrismaPg adapter · Transaction pooler port 6543</p>
+        <p style="margin-top: 6px;"><span class="badge badge-orange">Render</span> <code>void runGeneratedRender()</code> detached from HTTP response — 409 guard prevents concurrent renders</p>
+        <p style="margin-top: 6px;"><span class="badge badge-pink">Share</span> <code>/share/[id]</code> is fully public — no auth required, serves rendered video</p>
       </div>
     </div>
   </div>
 
-  <!-- ── Data Model ── -->
+  <!-- ── Data Models ── -->
   <div class="section">
-    <h2>Data Model</h2>
-    <div class="card">
-      <table>
-        <thead>
-          <tr>
-            <th>Field</th>
-            <th>Type</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td><code>id</code></td><td><span class="badge badge-gray">cuid</span></td><td>Primary key</td></tr>
-          <tr><td><code>userId</code></td><td><span class="badge badge-gray">String</span></td><td>Supabase auth user ID — all queries scoped by this</td></tr>
-          <tr><td><code>projectName</code></td><td><span class="badge badge-gray">String</span></td><td>Human-readable project name</td></tr>
-          <tr><td><code>tagline</code></td><td><span class="badge badge-gray">String</span></td><td>One-line product description shown in intro scene</td></tr>
-          <tr><td><code>description</code></td><td><span class="badge badge-gray">String</span></td><td>Longer context fed to Claude for outline generation</td></tr>
-          <tr><td><code>sourceType</code></td><td><span class="badge badge-gray">String[]</span></td><td>Array of: <code>screenshots</code>, <code>url</code>, <code>repo</code>, <code>description</code></td></tr>
-          <tr><td><code>screenshotUrls</code></td><td><span class="badge badge-blue">Json</span></td><td>Array of Supabase Storage public URLs</td></tr>
-          <tr><td><code>features</code></td><td><span class="badge badge-blue">Json</span></td><td>Array of feature strings (from wizard or AI-extracted)</td></tr>
-          <tr><td><code>stylePreset</code></td><td><span class="badge badge-gray">String</span></td><td><code>clean</code> · <code>cyber</code> · <code>playful</code></td></tr>
-          <tr><td><code>aspectRatio</code></td><td><span class="badge badge-gray">String</span></td><td><code>16:9</code> · <code>9:16</code> · <code>4:3</code></td></tr>
-          <tr><td><code>codeSummary</code></td><td><span class="badge badge-blue">Json?</span></td><td>Claude repo analysis output — stack, features, routes, AI usage</td></tr>
-          <tr><td><code>demoConfig</code></td><td><span class="badge badge-blue">Json?</span></td><td>Claude outline — theme, aspectRatio, scenes array</td></tr>
-          <tr><td><code>renderStatus</code></td><td><span class="badge badge-gray">String</span></td><td><code>draft</code> → <code>config_generated</code> → <code>rendering</code> → <code>ready</code> | <code>failed</code></td></tr>
-          <tr><td><code>videoUrl</code></td><td><span class="badge badge-gray">String?</span></td><td>Supabase Storage public URL for the rendered MP4</td></tr>
-          <tr><td><code>createdAt</code></td><td><span class="badge badge-gray">DateTime</span></td><td>Auto-set on create</td></tr>
-          <tr><td><code>updatedAt</code></td><td><span class="badge badge-gray">DateTime</span></td><td>Auto-updated on every write</td></tr>
-        </tbody>
-      </table>
+    <h2>Data Models</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>DemoProject</h3>
+        <hr style="margin: 8px 0;">
+        <table>
+          <tr><td><code>id</code></td><td>cuid primary key</td></tr>
+          <tr><td><code>userId</code></td><td>Supabase auth UID — all queries scoped</td></tr>
+          <tr><td><code>projectName</code> / <code>tagline</code> / <code>description</code></td><td>Project metadata</td></tr>
+          <tr><td><code>sourceType</code></td><td><code>repo</code> · <code>repo+screenshots</code> · <code>screenshots</code> · <code>url</code> · <code>repo+url</code></td></tr>
+          <tr><td><code>screenshotUrls</code></td><td>Json — Supabase Storage public URLs[]</td></tr>
+          <tr><td><code>stylePreset</code></td><td><code>clean</code> · <code>cyber</code> · <code>playful</code></td></tr>
+          <tr><td><code>aspectRatio</code></td><td><code>16:9</code> · <code>9:16</code></td></tr>
+          <tr><td><code>codeSummary</code></td><td>Json? — stack, features, routes, snippets</td></tr>
+          <tr><td><code>generatedCode</code></td><td>String? — full Remotion TSX (1000+ lines)</td></tr>
+          <tr><td><code>renderStatus</code></td><td><code>draft</code> → <code>config_generated</code> → <code>rendering</code> → <code>ready</code> | <code>failed</code></td></tr>
+          <tr><td><code>videoUrl</code></td><td>String? — Supabase Storage MP4 URL</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>UserProfile <span class="badge badge-green" style="font-size:10px; margin-left:6px;">new</span></h3>
+        <hr style="margin: 8px 0;">
+        <table>
+          <tr><td><code>id</code></td><td>= Supabase auth user ID</td></tr>
+          <tr><td><code>anthropicApiKey</code></td><td>String? — AES-256-GCM encrypted</td></tr>
+          <tr><td><code>freeGenerationsUsed</code></td><td>Int default 0 — atomic counter</td></tr>
+          <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>Auto timestamps</td></tr>
+        </table>
+        <hr style="margin: 14px 0 8px;">
+        <h3>CodeSummary (Json)</h3>
+        <hr style="margin: 8px 0;">
+        <table>
+          <tr><td><code>stack</code></td><td>frontend, backend, aiProviders[], databases[]</td></tr>
+          <tr><td><code>routes</code></td><td>{ path, description }[]</td></tr>
+          <tr><td><code>features</code></td><td>string[] — up to 7, user-friendly</td></tr>
+          <tr><td><code>aiUsage</code></td><td>string[] — detected LLM usage</td></tr>
+          <tr><td><code>codeSnippets</code></td><td>{ filename, content }[] — top 5, 2000 chars each</td></tr>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -264,150 +363,148 @@ hr { border: none; border-top: 1.5px solid #e2e8f0; margin: 32px 0; }
     <div class="card">
       <table>
         <thead>
-          <tr><th>Method</th><th>Route</th><th>Description</th></tr>
+          <tr><th>Method</th><th>Route</th><th>Description</th><th>Auth</th></tr>
         </thead>
         <tbody>
           <tr>
             <td><span class="method method-post">POST</span></td>
             <td><span class="route">/api/demos</span></td>
-            <td>Create a new demo project. Validates with Zod, requires auth.</td>
+            <td>Create demo project in draft status</td>
+            <td><span class="badge badge-orange">required</span></td>
           </tr>
           <tr>
             <td><span class="method method-get">GET</span></td>
             <td><span class="route">/api/demos/[id]</span></td>
-            <td>Fetch a single demo. Checks ownership.</td>
+            <td>Fetch single demo — ownership checked</td>
+            <td><span class="badge badge-orange">required</span></td>
           </tr>
           <tr>
             <td><span class="method method-patch">PATCH</span></td>
             <td><span class="route">/api/demos/[id]</span></td>
-            <td>Update demo fields (e.g., save edited <code>demoConfig</code>).</td>
+            <td>Update mutable fields (name, tagline, style, demoConfig)</td>
+            <td><span class="badge badge-orange">required</span></td>
           </tr>
           <tr>
             <td><span class="method method-delete">DELETE</span></td>
             <td><span class="route">/api/demos/[id]</span></td>
-            <td>Delete demo and all associated storage assets.</td>
+            <td>Delete demo row + best-effort Supabase Storage cleanup (screenshots + video)</td>
+            <td><span class="badge badge-orange">required</span></td>
           </tr>
           <tr>
             <td><span class="method method-post">POST</span></td>
             <td><span class="route">/api/demos/[id]/screenshots</span></td>
-            <td>Multipart upload. Saves to <code>screenshots/{userId}/{demoId}/{file}</code> via admin client. Appends public URLs to <code>screenshotUrls[]</code>.</td>
+            <td>Multipart upload up to 6 images → <code>screenshots/{userId}/{demoId}/</code></td>
+            <td><span class="badge badge-orange">required</span></td>
           </tr>
           <tr>
             <td><span class="method method-post">POST</span></td>
             <td><span class="route">/api/demos/[id]/analyze-repo</span></td>
-            <td>GitHub tree traversal → file scoring → Claude extraction → saves <code>codeSummary</code>.</td>
+            <td>Octokit file tree + scoring → Claude → saves CodeSummary + 5 code snippets</td>
+            <td><span class="badge badge-orange">required</span></td>
           </tr>
           <tr>
             <td><span class="method method-post">POST</span></td>
-            <td><span class="route">/api/demos/[id]/generate-config</span></td>
-            <td>Builds prompt from all project inputs → Claude → Zod validation → saves <code>demoConfig</code>.</td>
+            <td><span class="route">/api/demos/[id]/generate-composition</span></td>
+            <td>Claude writes complete Remotion TSX (8000 tokens). BYOK gate: 1 free gen then user key required.</td>
+            <td><span class="badge badge-orange">required</span></td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td><span class="route">/api/demos/[id]/iterate</span></td>
+            <td>Claude modifies existing TSX based on plain-language request. Always requires user's own API key.</td>
+            <td><span class="badge badge-orange">required</span></td>
           </tr>
           <tr>
             <td><span class="method method-post">POST</span></td>
             <td><span class="route">/api/demos/[id]/render</span></td>
-            <td>Returns <code>202</code> immediately. Launches background <code>runRender()</code>: bundle → selectComposition → renderMedia → upload to Storage.</td>
+            <td>Returns 202 immediately. Background: write TSX → bundle → renderMedia → upload → DB update. 409 if already rendering.</td>
+            <td><span class="badge badge-orange">required</span></td>
           </tr>
           <tr>
             <td><span class="method method-get">GET</span></td>
             <td><span class="route">/api/demos/[id]/render/status</span></td>
-            <td>Returns <code>{ renderStatus, videoUrl }</code>. Polled every 2s by RenderPanel.</td>
+            <td>Returns <code>{ renderStatus, videoUrl }</code> — polled every 2s by RenderPanel</td>
+            <td><span class="badge badge-orange">required</span></td>
+          </tr>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td><span class="route">/api/settings</span></td>
+            <td>Returns <code>{ hasApiKey, freeGenerationsUsed, freeGenerationsTotal }</code></td>
+            <td><span class="badge badge-orange">required</span></td>
+          </tr>
+          <tr>
+            <td><span class="method method-patch">PATCH</span></td>
+            <td><span class="route">/api/settings</span></td>
+            <td>Save Anthropic API key (must start with <code>sk-ant-</code>) — encrypted before storage</td>
+            <td><span class="badge badge-orange">required</span></td>
           </tr>
         </tbody>
       </table>
+    </div>
+    <div class="callout-info" style="margin-top: 12px;">
+      <strong>Public route:</strong> <code>/share/[id]</code> is a Next.js page (not an API route) — no auth required. Fetches from Prisma directly and renders the video player.
     </div>
   </div>
 
   <!-- ── Claude Integration ── -->
   <div class="section">
     <h2>Claude AI Integration</h2>
-    <div class="grid-2">
+    <div class="grid-3">
       <div class="card">
         <h3>Call 1 — Repo Analysis</h3>
         <hr style="margin: 10px 0;">
-        <p style="margin-bottom: 10px;">Route: <code>POST /api/demos/[id]/analyze-repo</code></p>
-        <p style="margin-bottom: 8px;"><strong>Input:</strong> Top ~15 files scored by relevance heuristic (route files +10, API dirs +8, AI hints +12, config +6). Each file truncated to 3,000 chars.</p>
-        <p style="margin-bottom: 8px;"><strong>Output:</strong> <code>CodeSummary</code> — stack (frontend/backend/DBs/AI providers), features[], aiUsage[], routes[]</p>
-        <p><strong>Validation:</strong> Zod schema with regex JSON extraction from Claude response.</p>
-        <p style="margin-top: 10px;"><span class="badge badge-purple">claude-sonnet-4-6</span> <span class="badge badge-gray">max_tokens: 1500</span></p>
+        <p style="margin-bottom: 8px;"><strong>Route:</strong> <code>POST /api/demos/[id]/analyze-repo</code></p>
+        <p style="margin-bottom: 8px;"><strong>Input:</strong> Top 25 files scored by heuristic. Always includes README + package.json. Each file truncated to 3,000 chars.</p>
+        <p style="margin-bottom: 8px;"><strong>Output:</strong> <code>CodeSummary</code> — stack, features[], aiUsage[], routes[], codeSnippets[]</p>
+        <p style="margin-bottom: 8px;"><strong>Snippets:</strong> Top 5 non-README files, 2,000 chars each — used by generate-composition</p>
+        <p><span class="badge badge-purple">claude-sonnet-4-6</span> <span class="badge badge-gray">1,500 tokens</span></p>
       </div>
       <div class="card">
-        <h3>Call 2 — Outline Generation</h3>
+        <h3>Call 2 — Video Code Generation</h3>
         <hr style="margin: 10px 0;">
-        <p style="margin-bottom: 10px;">Route: <code>POST /api/demos/[id]/generate-config</code></p>
-        <p style="margin-bottom: 8px;"><strong>Input:</strong> projectName, tagline, description, stylePreset, screenshot count, features[], and codeSummary (if available)</p>
-        <p style="margin-bottom: 8px;"><strong>Output:</strong> <code>DemoConfig</code> — theme, aspectRatio, scenes[] with type/headline/body/durationSeconds/cta/technicalNote</p>
-        <p><strong>Validation:</strong> Zod schema enforcing scene structure. Sets <code>renderStatus = "config_generated"</code>.</p>
-        <p style="margin-top: 10px;"><span class="badge badge-purple">claude-sonnet-4-6</span> <span class="badge badge-gray">max_tokens: 2000</span></p>
+        <p style="margin-bottom: 8px;"><strong>Route:</strong> <code>POST /api/demos/[id]/generate-composition</code></p>
+        <p style="margin-bottom: 8px;"><strong>Input:</strong> App metadata + style + code snippets (exact field names, routes, terminology)</p>
+        <p style="margin-bottom: 8px;"><strong>Output:</strong> Complete valid TypeScript/TSX — all required Remotion exports, 5–7 scenes, app-specific UI components</p>
+        <p style="margin-bottom: 8px;"><strong>BYOK:</strong> First call uses app key (free tier). Subsequent calls require user's own key.</p>
+        <p><span class="badge badge-purple">claude-sonnet-4-6</span> <span class="badge badge-gray">8,000 tokens</span></p>
+      </div>
+      <div class="card">
+        <h3>Call 3 — Iteration</h3>
+        <hr style="margin: 10px 0;">
+        <p style="margin-bottom: 8px;"><strong>Route:</strong> <code>POST /api/demos/[id]/iterate</code></p>
+        <p style="margin-bottom: 8px;"><strong>Input:</strong> Current full TSX + plain-language change request (e.g. "make the hook faster")</p>
+        <p style="margin-bottom: 8px;"><strong>Output:</strong> Updated complete TSX — surgical changes preserving structure</p>
+        <p style="margin-bottom: 8px;"><strong>BYOK:</strong> Always requires user's own API key. Never uses app key.</p>
+        <p><span class="badge badge-purple">claude-sonnet-4-6</span> <span class="badge badge-gray">8,000 tokens</span></p>
       </div>
     </div>
-    <pre><code>// callClaude() helper — src/lib/claude.ts
-const message = await anthropic.messages.create({
-  model:      "claude-sonnet-4-6",
-  max_tokens: maxTokens,
-  system:     system,          // role + output format instructions
-  messages:   [{ role: "user", content: user }],
-});
-// Dev: logs input_tokens, output_tokens, latency</code></pre>
   </div>
 
-  <!-- ── Remotion Scenes ── -->
+  <!-- ── Render Pipeline ── -->
   <div class="section">
-    <h2>Remotion Video Engine</h2>
-    <p style="margin-bottom: 20px; color: #64748b;">Each scene type maps to a Remotion <code>&lt;Sequence&gt;</code> with its own animation logic. <code>durationSeconds × FPS(30)</code> = frame count per scene.</p>
-
-    <div class="grid-3">
-      <div class="card scene-intro">
-        <h3 style="color: #4f46e5;">Intro Scene</h3>
-        <hr style="margin: 8px 0;">
-        <ul style="padding-left: 16px; font-size: 13px; line-height: 2;">
-          <li>Title fade-up + scale entrance</li>
-          <li>Accent underline scaleX reveal</li>
-          <li>Tagline fade-in</li>
-          <li>Staggered bullet points</li>
-          <li>Radial gradient glow background</li>
-          <li>Bottom accent bar</li>
-        </ul>
-      </div>
-      <div class="card scene-feature">
-        <h3 style="color: #15803d;">Feature Scene</h3>
-        <hr style="margin: 8px 0;">
-        <ul style="padding-left: 16px; font-size: 13px; line-height: 2;">
-          <li>Screenshot with Ken Burns zoom + pan</li>
-          <li>Left panel slides in from -20px</li>
-          <li>Headline with opacity + translateY</li>
-          <li>Staggered bullet entrance</li>
-          <li>Tech stack badge</li>
-          <li>Left-to-right gradient blend overlay</li>
-        </ul>
-      </div>
-      <div class="card scene-outro">
-        <h3 style="color: #b45309;">Outro Scene</h3>
-        <hr style="margin: 8px 0;">
-        <ul style="padding-left: 16px; font-size: 13px; line-height: 2;">
-          <li>CTA scale-in entrance</li>
-          <li>Headline + body copy</li>
-          <li>technicalNote split into chips</li>
-          <li>Staggered chip entrance</li>
-          <li>Pulsing glow background</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="callout-info" style="margin-top: 20px;">
-      <strong>Theme tokens</strong> — <code>clean</code> (white/indigo), <code>cyber</code> (black/cyan), <code>playful</code> (dark/pink) — each defines <code>bg</code>, <code>accent</code>, <code>gradient</code>, and <code>gridColor</code> used across all three scenes.
-    </div>
-
-    <h3 style="margin-top: 24px; margin-bottom: 12px;">Render Pipeline</h3>
+    <h2>Render Pipeline</h2>
     <pre><code>POST /api/demos/[id]/render
-  ├─ renderStatus = "rendering"  →  return 202
-  └─ void runRender()                            // detached — never awaited
-       ├─ const { bundle }           = await import("@remotion/bundler")
-       ├─ const { renderMedia, ... } = await import("@remotion/renderer")
-       ├─ bundleLocation = await bundle(remotionIndex, { webpackOverride })
-       ├─ composition   = await selectComposition(bundleLocation, "DemoVideo", inputProps)
-       ├─ await renderMedia({ composition, outputLocation: "/tmp/demoforge-{id}.mp4" })
-       ├─ await supabaseAdmin.storage.upload("videos/{userId}/{demoId}/demo.mp4", file)
-       └─ prisma.update({ renderStatus: "ready", videoUrl })</code></pre>
+  ├─ Auth + ownership check
+  ├─ 409 if renderStatus === "rendering"  (prevents concurrent render race)
+  ├─ DB: renderStatus = "rendering", videoUrl = null
+  ├─ return 202 immediately
+  └─ void runGeneratedRender()                    // detached background task
+       ├─ fs.writeFile("src/remotion/GeneratedDemo.tsx", generatedCode)
+       ├─ const { bundle }         = await import("@remotion/bundler")
+       ├─ const { renderMedia, … } = await import("@remotion/renderer")
+       ├─ bundleLocation = await bundle("src/remotion/generated-entry.ts", { webpackAlias @ → src })
+       ├─ composition   = await selectComposition(bundleLocation, "GeneratedDemo", { screenshotUrls })
+       ├─ await renderMedia({ codec: "h264", outputLocation: "/tmp/demoforge-gen-{id}.mp4" })
+       ├─ fileBuffer = await fs.readFile(outputPath)
+       ├─ await supabaseAdmin.storage.from("videos").upload("{userId}/{demoId}/demo.mp4", fileBuffer)
+       └─ prisma.update({ renderStatus: "ready", videoUrl })
+          on error → prisma.update({ renderStatus: "failed" })
+
+Client: GET /api/demos/[id]/render/status  polled every 2s
+  └─ { renderStatus, videoUrl } → shows progress bar → video player on "ready"</code></pre>
+    <div class="callout-warn" style="margin-top: 16px;">
+      <strong>Deployment constraint:</strong> <code>void runGeneratedRender()</code> requires a persistent Node.js process. Works on Railway/Render/VPS. Killed mid-render on Vercel serverless — use Remotion Lambda for Vercel.
+    </div>
   </div>
 
   <!-- ── File Structure ── -->
@@ -417,63 +514,97 @@ const message = await anthropic.messages.create({
       <div class="card">
         <div class="tree">
           <div><span class="dir">src/app/</span></div>
-          <div>&nbsp;&nbsp;<span class="file">layout.tsx</span><span class="desc">Providers wrapper (ToastProvider)</span></div>
-          <div>&nbsp;&nbsp;<span class="file">globals.css</span><span class="desc">Design system, CSS vars, animations</span></div>
+          <div>&nbsp;&nbsp;<span class="file">layout.tsx</span><span class="desc">Providers + metadata</span></div>
+          <div>&nbsp;&nbsp;<span class="file">page.tsx</span><span class="desc">Landing page / hero</span></div>
           <div>&nbsp;&nbsp;<span class="dir">login/</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">LoginForm.tsx</span><span class="desc">GitHub + magic link auth UI</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">actions.ts</span><span class="desc">Server actions: signIn, signOut</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">LoginForm.tsx</span><span class="desc">GitHub OAuth + magic link UI</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">actions.ts</span><span class="desc">Server actions: signInWithGitHub, signOut</span></div>
+          <div>&nbsp;&nbsp;<span class="dir">auth/callback/</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">route.ts</span><span class="desc">Code exchange → session → redirect (open-redirect fixed)</span></div>
           <div>&nbsp;&nbsp;<span class="dir">demos/</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">page.tsx</span><span class="desc">Dashboard (server component)</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">loading.tsx</span><span class="desc">Skeleton grid while fetching</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">error.tsx</span><span class="desc">Error boundary for dashboard</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">page.tsx</span><span class="desc">Dashboard — card grid, delete</span></div>
           <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">new/</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">NewDemoWizard.tsx</span><span class="desc">3-step creation flow</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">NewDemoWizard.tsx</span><span class="desc">3-step wizard, "repo" default, skip step</span></div>
           <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">[id]/</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">page.tsx</span><span class="desc">Detail page (server component)</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">loading.tsx</span><span class="desc">Skeleton panels</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">error.tsx</span><span class="desc">Error boundary for detail</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">page.tsx</span><span class="desc">Detail — repo panel, generate, iterate, render</span></div>
+          <div>&nbsp;&nbsp;<span class="file new">settings/page.tsx</span><span class="desc">API key management + free tier display</span></div>
+          <div>&nbsp;&nbsp;<span class="file new">share/[id]/page.tsx</span><span class="desc">Public share page — no auth required</span></div>
           <div>&nbsp;&nbsp;<span class="dir">api/demos/[id]/</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">route.ts</span><span class="desc">GET / PATCH / DELETE</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">screenshots/route.ts</span><span class="desc">Multipart upload</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">analyze-repo/route.ts</span><span class="desc">GitHub + Claude analysis</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">generate-config/route.ts</span><span class="desc">Claude outline generation</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">render/route.ts</span><span class="desc">Background render task</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">render/status/route.ts</span><span class="desc">Polling endpoint</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">route.ts</span><span class="desc">GET / PATCH / DELETE (DELETE cleans storage)</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">screenshots/route.ts</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">analyze-repo/route.ts</span><span class="desc">README + pkg.json priority, 5 snippets</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">generate-composition/route.ts</span><span class="desc">BYOK gate + Claude TSX gen</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file new">iterate/route.ts</span><span class="desc">Plain-language TSX modification</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">render/route.ts</span><span class="desc">409 concurrent guard + background render</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">render/status/route.ts</span></div>
+          <div>&nbsp;&nbsp;<span class="file new">api/settings/route.ts</span><span class="desc">GET/PATCH user profile</span></div>
         </div>
       </div>
       <div class="card">
         <div class="tree">
           <div><span class="dir">src/components/</span></div>
-          <div>&nbsp;&nbsp;<span class="file">Nav.tsx</span><span class="desc">Server — logo, links, user avatar</span></div>
-          <div>&nbsp;&nbsp;<span class="file">OutlinePanel.tsx</span><span class="desc">Scene editor, drag-drop, inline edit</span></div>
-          <div>&nbsp;&nbsp;<span class="file">RepoPanel.tsx</span><span class="desc">Repo input + CodeSummaryDisplay</span></div>
-          <div>&nbsp;&nbsp;<span class="file">RenderPanel.tsx</span><span class="desc">Render trigger + polling + player</span></div>
-          <div>&nbsp;&nbsp;<span class="file">DemoPlayer.tsx</span><span class="desc">@remotion/player (ssr:false)</span></div>
-          <div>&nbsp;&nbsp;<span class="file">StatusBadge.tsx</span><span class="desc">Colored renderStatus badge</span></div>
-          <div>&nbsp;&nbsp;<span class="file">DeleteDemoButton.tsx</span><span class="desc">Inline confirm-then-delete</span></div>
+          <div>&nbsp;&nbsp;<span class="file">Nav.tsx</span><span class="desc">Logo + Dashboard + Settings links</span></div>
+          <div>&nbsp;&nbsp;<span class="file">GenerateCompositionPanel.tsx</span><span class="desc">Generate btn + code preview toggle + BYOK banner</span></div>
+          <div>&nbsp;&nbsp;<span class="file new">IteratePanel.tsx</span><span class="desc">Quick prompts + text input + re-render banner</span></div>
+          <div>&nbsp;&nbsp;<span class="file">RenderPanel.tsx</span><span class="desc">Render + polling + player + share/copy buttons</span></div>
+          <div>&nbsp;&nbsp;<span class="file">RepoPanel.tsx</span><span class="desc">owner/repo input + CodeSummaryDisplay</span></div>
+          <div>&nbsp;&nbsp;<span class="file new">ApiKeyForm.tsx</span><span class="desc">Password input to save Anthropic key</span></div>
+          <div>&nbsp;&nbsp;<span class="file">StatusBadge.tsx</span><span class="desc">Colored renderStatus pill</span></div>
+          <div>&nbsp;&nbsp;<span class="file">DeleteDemoButton.tsx</span><span class="desc">Confirm-then-delete</span></div>
           <div>&nbsp;&nbsp;<span class="file">Toast.tsx</span><span class="desc">ToastProvider + useToast hook</span></div>
-          <div>&nbsp;&nbsp;<span class="file">Providers.tsx</span><span class="desc">Client root wrapper</span></div>
-          <br>
-          <div><span class="dir">src/remotion/</span></div>
-          <div>&nbsp;&nbsp;<span class="file">Root.tsx</span><span class="desc">registerRoot + Composition + metadata</span></div>
-          <div>&nbsp;&nbsp;<span class="file">DemoVideo.tsx</span><span class="desc">Root composition, scene → Sequence</span></div>
-          <div>&nbsp;&nbsp;<span class="file">theme.ts</span><span class="desc">THEMES record + VIDEO_DIMENSIONS</span></div>
-          <div>&nbsp;&nbsp;<span class="dir">scenes/</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">IntroScene.tsx</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">FeatureScene.tsx</span></div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">OutroScene.tsx</span></div>
           <br>
           <div><span class="dir">src/lib/</span></div>
-          <div>&nbsp;&nbsp;<span class="file">claude.ts</span><span class="desc">callClaude() with token logging</span></div>
+          <div>&nbsp;&nbsp;<span class="file">claude.ts</span><span class="desc">callClaude() — optional apiKey param for BYOK</span></div>
+          <div>&nbsp;&nbsp;<span class="file new">encrypt.ts</span><span class="desc">AES-256-GCM encrypt/decrypt for API keys</span></div>
+          <div>&nbsp;&nbsp;<span class="file new">userProfile.ts</span><span class="desc">BYOK helpers + atomic reserveFreeGeneration()</span></div>
           <div>&nbsp;&nbsp;<span class="file">prisma.ts</span><span class="desc">Singleton PrismaPg client</span></div>
           <div>&nbsp;&nbsp;<span class="dir">supabase/</span></div>
           <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">server.ts</span><span class="desc">createClient + createAdminClient</span></div>
           <br>
+          <div><span class="dir">src/remotion/</span></div>
+          <div>&nbsp;&nbsp;<span class="file">GeneratedDemo.tsx</span><span class="desc">Auto-written per render — gitignored</span></div>
+          <div>&nbsp;&nbsp;<span class="file">GeneratedDemoRoot.tsx</span><span class="desc">Registers GeneratedDemo composition</span></div>
+          <div>&nbsp;&nbsp;<span class="file">generated-entry.ts</span><span class="desc">Remotion bundle entry point</span></div>
+          <br>
           <div><span class="dir">prisma/</span></div>
-          <div>&nbsp;&nbsp;<span class="file">schema.prisma</span><span class="desc">DemoProject model (no url — Prisma 7)</span></div>
-          <div><span class="file">prisma.config.ts</span><span class="desc">Prisma 7 CLI config (url only)</span></div>
+          <div>&nbsp;&nbsp;<span class="file">schema.prisma</span><span class="desc">DemoProject + UserProfile models</span></div>
+          <div>&nbsp;&nbsp;<span class="file new">migrations/add_user_profiles.sql</span><span class="desc">Manual migration for UserProfile table</span></div>
+          <div><span class="file">prisma.config.ts</span><span class="desc">Prisma 7 CLI datasource config</span></div>
+          <div><span class="file new">TESTS.md</span><span class="desc">90 manual test cases across 10 sections</span></div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Security ── -->
+  <div class="section">
+    <h2>Security Notes</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Fixed</h3>
+        <hr style="margin: 8px 0;">
+        <ul style="padding-left: 16px; font-size: 13px; line-height: 2.2;">
+          <li>✅ Open redirect in <code>/auth/callback</code> — <code>next</code> param validated</li>
+          <li>✅ TOCTOU on free generation — Prisma transaction</li>
+          <li>✅ Concurrent render race — 409 guard</li>
+          <li>✅ Storage orphans — DELETE cleans up files</li>
+          <li>✅ <code>GeneratedDemo.tsx</code> gitignored — no per-user code committed</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Known / Watch</h3>
+        <hr style="margin: 8px 0;">
+        <ul style="padding-left: 16px; font-size: 13px; line-height: 2.2;">
+          <li>⚠️ No per-user rate limiting on AI endpoints</li>
+          <li>⚠️ <code>API_KEY_ENCRYPTION_SECRET</code> must be kept secret — rotate if leaked</li>
+          <li>⚠️ Supabase Storage is public by URL (intentional for sharing)</li>
+          <li>⚠️ <code>read:org</code> OAuth scope is broader than necessary</li>
+          <li>⚠️ No <code>Content-Security-Policy</code> header configured</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout-danger" style="margin-top: 16px;">
+      <strong>Critical:</strong> Never commit <code>.env</code> to version control. The file contains live Supabase credentials, API keys, and the AES encryption secret. Rotate any accidentally exposed secrets immediately in Supabase Dashboard → Database → Reset password.
     </div>
   </div>
 
@@ -486,92 +617,54 @@ const message = await anthropic.messages.create({
           <tr><th>Variable</th><th>Where to find it</th><th>Used by</th></tr>
         </thead>
         <tbody>
-          <tr>
-            <td><code>NEXT_PUBLIC_SUPABASE_URL</code></td>
-            <td>Supabase → Settings → API</td>
-            <td>All Supabase client calls</td>
-          </tr>
-          <tr>
-            <td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td>
-            <td>Supabase → Settings → API</td>
-            <td>Client-side auth, public reads</td>
-          </tr>
-          <tr>
-            <td><code>SUPABASE_SERVICE_ROLE_KEY</code></td>
-            <td>Supabase → Settings → API</td>
-            <td>Admin Storage uploads (bypasses RLS)</td>
-          </tr>
-          <tr>
-            <td><code>DATABASE_URL</code></td>
-            <td>Supabase → Database → Connection (Transaction pooler, port 6543)</td>
-            <td>Prisma runtime queries</td>
-          </tr>
-          <tr>
-            <td><code>DIRECT_URL</code></td>
-            <td>Supabase → Database → Connection (Session / direct, port 5432)</td>
-            <td>Prisma migrations only</td>
-          </tr>
-          <tr>
-            <td><code>ANTHROPIC_API_KEY</code></td>
-            <td><a href="https://console.anthropic.com">console.anthropic.com</a></td>
-            <td>All Claude API calls</td>
-          </tr>
-          <tr>
-            <td><code>GITHUB_CLIENT_ID</code></td>
-            <td>GitHub → Settings → Developer settings → OAuth Apps</td>
-            <td>Supabase GitHub OAuth provider</td>
-          </tr>
-          <tr>
-            <td><code>GITHUB_CLIENT_SECRET</code></td>
-            <td>Same OAuth App</td>
-            <td>Supabase GitHub OAuth + Octokit token exchange</td>
-          </tr>
-          <tr>
-            <td><code>NEXT_PUBLIC_APP_URL</code></td>
-            <td>Your deployment URL or <code>http://localhost:3000</code></td>
-            <td>OAuth callback redirect</td>
-          </tr>
+          <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>Supabase → Settings → API</td><td>All Supabase client calls</td></tr>
+          <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>Supabase → Settings → API</td><td>Client-side auth, public reads</td></tr>
+          <tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Supabase → Settings → API</td><td>Admin Storage uploads (bypasses RLS)</td></tr>
+          <tr><td><code>DATABASE_URL</code></td><td>Supabase → Database → Connection (pooler, port 6543)</td><td>Prisma runtime queries</td></tr>
+          <tr><td><code>DIRECT_URL</code></td><td>Supabase → Database → Connection (direct, port 5432)</td><td>Prisma migrations only</td></tr>
+          <tr><td><code>ANTHROPIC_API_KEY</code></td><td>console.anthropic.com</td><td>App key — used for first free generation</td></tr>
+          <tr><td><code>GITHUB_CLIENT_ID</code></td><td>GitHub → Settings → OAuth Apps</td><td>Supabase GitHub OAuth</td></tr>
+          <tr><td><code>GITHUB_CLIENT_SECRET</code></td><td>Same OAuth App</td><td>Supabase GitHub OAuth</td></tr>
+          <tr><td><code>NEXT_PUBLIC_APP_URL</code></td><td>Your deployment URL</td><td>OAuth callback + share page URLs</td></tr>
+          <tr><td><code>API_KEY_ENCRYPTION_SECRET</code></td><td>Generate: <code>node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</code></td><td>AES-256-GCM encryption of user API keys</td></tr>
         </tbody>
       </table>
     </div>
-    <div class="callout-warn" style="margin-top: 16px;">
-      <strong>Never commit <code>.env</code> to version control.</strong> Copy <code>.env.example</code> to <code>.env</code> and fill in your values locally. The <code>.gitignore</code> excludes <code>.env</code> — only <code>.env.example</code> (with placeholder values) is tracked.
-    </div>
   </div>
 
-  <!-- ── Key Design Decisions ── -->
+  <!-- ── Key Engineering Decisions ── -->
   <div class="section">
     <h2>Key Engineering Decisions</h2>
     <div class="grid-2">
       <div class="card">
-        <h3>Background Render Task</h3>
+        <h3>Claude Writes the Entire Video</h3>
         <hr style="margin: 8px 0;">
-        <p><code>void runRender()</code> is called without <code>await</code> so the HTTP response returns a <code>202</code> immediately. The client polls <code>/render/status</code> every 2 seconds. This works on long-running server environments (Railway, Render, VPS) but will time out on Vercel serverless. A dedicated render worker queue is the production path.</p>
+        <p>Instead of templates or a fixed scene library, Claude writes a 1000+ line Remotion TSX file from scratch for every demo. This produces videos that look hand-crafted for that specific app — because they are. The tradeoff: if Claude generates broken TypeScript, the render fails.</p>
       </div>
       <div class="card">
-        <h3>Prisma 7 + PrismaPg Adapter</h3>
+        <h3>Background Render + Polling</h3>
         <hr style="margin: 8px 0;">
-        <p>Prisma 7 removed <code>url = env("DATABASE_URL")</code> from <code>schema.prisma</code> — the URL now lives only in <code>prisma.config.ts</code> (for CLI) and the <code>PrismaPg({ connectionString })</code> constructor (for runtime). <code>@types/pg</code> must not be installed separately — it conflicts with the version bundled inside <code>@prisma/adapter-pg</code>.</p>
+        <p><code>void runGeneratedRender()</code> is detached from the HTTP response — 202 returned immediately. Client polls <code>/render/status</code> every 2s. Works on persistent Node (Railway/Render). Fails silently on Vercel serverless — needs Remotion Lambda for that.</p>
       </div>
       <div class="card">
         <h3>Remotion Webpack Externals</h3>
         <hr style="margin: 8px 0;">
-        <p><code>@remotion/bundler</code> ships native <code>.node</code> binaries (<code>@rspack/binding-darwin-arm64.node</code>). Next.js webpack will crash trying to parse these. Both <code>experimental.serverComponentsExternalPackages</code> and <code>webpack.externals</code> must include all four Remotion packages.</p>
+        <p><code>@remotion/bundler</code> ships native <code>.node</code> binaries. Both <code>experimental.serverComponentsExternalPackages</code> and <code>webpack.externals</code> must include all four Remotion packages or Next.js webpack crashes at build time.</p>
       </div>
       <div class="card">
-        <h3>Prisma JsonValue Casting</h3>
+        <h3>Prisma 7 + PrismaPg Adapter</h3>
         <hr style="margin: 8px 0;">
-        <p>Prisma's <code>JsonValue</code> and custom TypeScript interfaces (e.g., <code>DemoConfig</code>) don't overlap, so direct casts like <code>raw.demoConfig as DemoConfig</code> fail. The pattern used throughout is a double cast: <code>raw.demoConfig as unknown as DemoConfig</code>.</p>
+        <p>Prisma 7 removed the URL from <code>schema.prisma</code>. It lives in <code>prisma.config.ts</code> (CLI) and the <code>PrismaPg({ connectionString })</code> constructor (runtime). Do NOT install <code>@types/pg</code> separately — it conflicts with the version inside <code>@prisma/adapter-pg</code>.</p>
       </div>
       <div class="card">
-        <h3>Supabase Admin Client for Storage</h3>
+        <h3>BYOK with AES-256-GCM</h3>
         <hr style="margin: 8px 0;">
-        <p>RLS policies on Supabase Storage buckets would block server-side uploads from an API route. <code>createAdminClient()</code> uses <code>SUPABASE_SERVICE_ROLE_KEY</code> to bypass RLS entirely. This client is only instantiated server-side and never exposed to the browser.</p>
+        <p>User Anthropic keys are encrypted before DB storage using AES-256-GCM (12-byte random IV, 16-byte auth tag, stored as hex-joined string). The encryption key lives in <code>API_KEY_ENCRYPTION_SECRET</code> — a 64-char hex string that must never be committed.</p>
       </div>
       <div class="card">
-        <h3>GitHub Provider Token for Octokit</h3>
+        <h3>Atomic Free Generation Gate</h3>
         <hr style="margin: 8px 0;">
-        <p>When a user signs in with GitHub OAuth, Supabase stores their GitHub access token in the session as <code>provider_token</code>. The <code>analyze-repo</code> route reads this token from the server-side session and passes it to Octokit, giving it the user's own rate-limit quota (5,000 req/hr) without any extra setup.</p>
+        <p>A Prisma <code>$transaction</code> wraps the read-check-increment sequence, preventing TOCTOU races where two concurrent requests both pass the "has free gen?" check before either increments the counter.</p>
       </div>
     </div>
   </div>
@@ -581,23 +674,27 @@ const message = await anthropic.messages.create({
     <h2>Deployment</h2>
     <div class="grid-2">
       <div class="card">
-        <h3>Recommended: Railway / Render</h3>
+        <h3>Recommended: Railway / Render / VPS</h3>
         <hr style="margin: 8px 0;">
-        <p style="margin-bottom: 10px;">DemoForge needs a persistent Node.js process for the background render task. Railway and Render both provide this with zero config.</p>
+        <p style="margin-bottom: 10px;">DemoForge needs a persistent Node.js process for background rendering.</p>
         <ol style="padding-left: 16px; font-size: 13px; line-height: 2;">
           <li>Push to GitHub</li>
-          <li>Create a new Railway/Render service pointing at the repo</li>
-          <li>Set all environment variables in the service dashboard</li>
-          <li>Build command: <code>npm run build</code></li>
-          <li>Start command: <code>node node_modules/next/dist/bin/next start</code></li>
+          <li>Create service from repo</li>
+          <li>Set all env vars in dashboard</li>
+          <li>Build: <code>npm run build</code></li>
+          <li>Start: <code>node node_modules/next/dist/bin/next start</code></li>
         </ol>
+        <div class="callout-success" style="margin-top: 10px;">
+          Local dev: <code>PORT=3001 node node_modules/next/dist/bin/next dev</code><br>
+          (npm run dev has a PATH quirk with Remotion native binaries)
+        </div>
       </div>
       <div class="card">
-        <h3>Vercel (partial)</h3>
+        <h3>Vercel (web only)</h3>
         <hr style="margin: 8px 0;">
-        <p style="margin-bottom: 10px;">The web app (dashboard, wizard, auth, outline editor) deploys fine to Vercel. The render step will time out on serverless functions.</p>
-        <div class="callout-warn" style="margin-top: 8px;">
-          To run on Vercel, move the render pipeline to a separate worker: a Railway service, a queue job (BullMQ), or a Remotion Lambda deployment.
+        <p style="margin-bottom: 10px;">Dashboard, wizard, auth, share page — all work fine. The render step will be killed by the serverless timeout.</p>
+        <div class="callout-warn">
+          Move the render pipeline to a dedicated worker: a Railway service receiving jobs via a queue, or Remotion Lambda for AWS-native rendering.
         </div>
       </div>
     </div>
@@ -606,7 +703,7 @@ const message = await anthropic.messages.create({
   <!-- ── Footer ── -->
   <hr>
   <p style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 24px;">
-    DemoForge &nbsp;·&nbsp; Next.js 14 · Claude claude-sonnet-4-6 · Remotion v4 · Supabase · Prisma 7
+    DemoForge &nbsp;·&nbsp; Next.js 14 · Claude claude-sonnet-4-6 · Remotion v4 · Supabase · Prisma 7 &nbsp;·&nbsp; Last updated March 2026
   </p>
 
 </div>

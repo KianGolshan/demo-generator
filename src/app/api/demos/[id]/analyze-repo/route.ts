@@ -8,8 +8,12 @@ import { z } from "zod";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const MAX_FILES_TO_FETCH = 20;
+const MAX_FILES_TO_FETCH = 25;
 const MAX_FILE_CHARS = 3000;
+const SNIPPET_COUNT = 5;
+const SNIPPET_CHARS = 2000;
+/** Files we always try to fetch first for context (repo root) */
+const PRIORITY_FILES = ["README.md", "readme.md", "README.mdx", "package.json"];
 
 /** File paths/names that signal routing or page structure */
 const ROUTE_PATTERNS = [
@@ -187,8 +191,21 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
     const interestingFiles = scoreAndRank(candidates).slice(0, MAX_FILES_TO_FETCH);
 
-    // 3. Fetch file contents in parallel (max 20)
-    const rawContents = await fetchFileContents(octokit, owner, repo, interestingFiles);
+    // 2b. Always try to include README + package.json for context
+    const priorityPaths = PRIORITY_FILES.filter((p) =>
+      tree.some((f) => f.path === p)
+    ).map((path) => ({ path }));
+
+    const interestingWithoutPriority = interestingFiles.filter(
+      (f) => !PRIORITY_FILES.includes(f.path)
+    );
+    const combinedFiles = [
+      ...priorityPaths,
+      ...interestingWithoutPriority,
+    ].slice(0, MAX_FILES_TO_FETCH);
+
+    // 3. Fetch file contents in parallel
+    const rawContents = await fetchFileContents(octokit, owner, repo, combinedFiles);
 
     // Re-sort by content-level AI import presence (boost AI files to top)
     const fileContents = rawContents.sort((a, b) => {
@@ -234,10 +251,11 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    // 7. Extract top 3 code snippets from the fetched files and merge into codeSummary
-    const codeSnippets = fileContents.slice(0, 3).map(({ path, content }) => ({
+    // 7. Extract top N code snippets (excluding README for snippets — too narrative)
+    const snippetFiles = fileContents.filter((f) => !f.path.match(/readme/i));
+    const codeSnippets = snippetFiles.slice(0, SNIPPET_COUNT).map(({ path, content }) => ({
       filename: path,
-      content:  content.slice(0, 1500),
+      content:  content.slice(0, SNIPPET_CHARS),
     }));
 
     const codeSummaryWithSnippets = { ...codeSummary, codeSnippets };

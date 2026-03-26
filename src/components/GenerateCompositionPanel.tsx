@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
+import Link from "next/link";
 
 type Props = {
-  demoId:         string;
-  hasRepoAnalysis: boolean;
+  demoId:           string;
+  hasRepoAnalysis:  boolean;
   hasGeneratedCode: boolean;
+  generatedCode?:   string;
 };
 
 /**
@@ -15,20 +17,28 @@ type Props = {
  * Calls POST /api/demos/[id]/generate-composition which asks Claude to
  * write a complete Remotion TSX file custom-built for this app.
  */
-export function GenerateCompositionPanel({ demoId, hasRepoAnalysis, hasGeneratedCode }: Props) {
+export function GenerateCompositionPanel({ demoId, hasRepoAnalysis, hasGeneratedCode, generatedCode }: Props) {
   const router      = useRouter();
   const toast       = useToast();
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState<string | null>(null);
-  const [done, setDone]       = useState(hasGeneratedCode);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState<string | null>(null);
+  const [done, setDone]               = useState(hasGeneratedCode);
+  const [showCode, setShowCode]       = useState(false);
+  const [apiKeyRequired, setApiKeyRequired] = useState(false);
 
   async function handleGenerate() {
     setLoading(true);
     setError(null);
+    setApiKeyRequired(false);
 
     try {
       const res  = await fetch(`/api/demos/${demoId}/generate-composition`, { method: "POST" });
       const data = await res.json();
+
+      if (res.status === 402) {
+        setApiKeyRequired(true);
+        return;
+      }
       if (!res.ok) throw new Error(data.error ?? "Generation failed");
 
       setDone(true);
@@ -68,6 +78,14 @@ export function GenerateCompositionPanel({ demoId, hasRepoAnalysis, hasGenerated
         </div>
 
         <div className="flex items-center gap-2">
+          {done && generatedCode && (
+            <button
+              onClick={() => setShowCode((s) => !s)}
+              className="btn-ghost text-sm py-2 px-3"
+            >
+              {showCode ? "Hide code" : "View code"}
+            </button>
+          )}
           {done && (
             <button
               onClick={handleGenerate}
@@ -93,6 +111,19 @@ export function GenerateCompositionPanel({ demoId, hasRepoAnalysis, hasGenerated
         </div>
       </div>
 
+      {/* API key required banner */}
+      {apiKeyRequired && (
+        <div className="rounded-xl border border-accent/30 bg-accent/5 p-4 animate-fade-in">
+          <p className="font-display font-bold text-sm mb-1">Free generation used</p>
+          <p className="text-muted-fg text-xs font-mono mb-3">
+            You&apos;ve used your 1 free generation. Add your Anthropic API key in Settings to keep creating demos.
+          </p>
+          <Link href="/settings" className="btn-primary text-sm py-2 px-4">
+            Add API key →
+          </Link>
+        </div>
+      )}
+
       {/* Progress (loading state) */}
       {loading && (
         <div className="animate-fade-in space-y-3">
@@ -106,8 +137,8 @@ export function GenerateCompositionPanel({ demoId, hasRepoAnalysis, hasGenerated
         </div>
       )}
 
-      {/* Done state — code preview */}
-      {done && !loading && (
+      {/* Done state */}
+      {done && !loading && !showCode && (
         <div className="rounded-xl border border-success/20 bg-success/5 p-4 animate-fade-in">
           <div className="flex items-start gap-3">
             <div className="text-success text-lg mt-0.5">✦</div>
@@ -124,8 +155,23 @@ export function GenerateCompositionPanel({ demoId, hasRepoAnalysis, hasGenerated
         </div>
       )}
 
+      {/* Code preview */}
+      {done && showCode && generatedCode && (
+        <div className="rounded-xl border border-border overflow-hidden animate-fade-in">
+          <div className="flex items-center justify-between px-4 py-2 bg-muted border-b border-border">
+            <span className="text-xs font-mono text-muted-fg">GeneratedDemo.tsx</span>
+            <span className="text-xs font-mono text-muted-fg tabular-nums">
+              {generatedCode.split("\n").length} lines
+            </span>
+          </div>
+          <pre className="text-xs font-mono text-foreground p-4 overflow-x-auto overflow-y-auto max-h-80 bg-background leading-relaxed">
+            <code>{generatedCode}</code>
+          </pre>
+        </div>
+      )}
+
       {/* Not started */}
-      {!done && !loading && (
+      {!done && !loading && !apiKeyRequired && (
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
           <div className="text-3xl mb-3">⟡</div>
           <p className="font-display font-bold text-sm mb-1">

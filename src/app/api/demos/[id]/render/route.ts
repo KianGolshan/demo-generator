@@ -61,6 +61,13 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
       );
     }
 
+    if (raw.renderStatus === "rendering") {
+      return NextResponse.json<ApiError>(
+        { error: "A render is already in progress.", code: "ALREADY_RENDERING" },
+        { status: 409 }
+      );
+    }
+
     const screenshotUrls = (raw.screenshotUrls as unknown as string[]) ?? [];
 
     // Mark as rendering immediately so the client can start polling

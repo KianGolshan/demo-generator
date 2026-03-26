@@ -10,6 +10,16 @@ datasource db {
   provider = "postgresql"
 }
 
+model UserProfile {
+  id                  String   @id  // = Supabase auth user ID
+  anthropicApiKey     String?        // AES-256-GCM encrypted
+  freeGenerationsUsed Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("user_profiles")
+}
+
 model DemoProject {
   id             String   @id @default(cuid())
   userId         String

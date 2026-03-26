@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { callClaude } from "@/lib/claude";
+import { getUserApiKey, reserveFreeGeneration } from "@/lib/userProfile";
 import type { ApiError, CodeSummary } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -242,6 +243,26 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
       screenshotUrls,
     });
 
+    // Resolve API key — user's own key, or first free generation, or 402
+    const userApiKey = await getUserApiKey(user.id);
+    let claudeApiKey: string | undefined;
+
+    if (userApiKey) {
+      claudeApiKey = userApiKey;
+    } else {
+      const reserved = await reserveFreeGeneration(user.id);
+      if (!reserved) {
+        return NextResponse.json<ApiError>(
+          {
+            error: "You've used your free generation. Add your Anthropic API key in Settings to keep generating.",
+            code: "API_KEY_REQUIRED",
+          },
+          { status: 402 }
+        );
+      }
+      claudeApiKey = undefined; // use app env key
+    }
+
     // Call Claude — generous token budget for full TSX code
     let generatedCode: string;
     try {
@@ -249,6 +270,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
         system:    SYSTEM_PROMPT,
         user:      userPrompt,
         maxTokens: 8000,
+        apiKey:    claudeApiKey,
       });
     } catch (err) {
       console.error("[generate-composition] Claude API error:", err);
