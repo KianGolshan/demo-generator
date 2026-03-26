@@ -1,4 +1,4 @@
 # Remotion needs ffmpeg for video encoding and chromium for rendering.
 # nixpacks installs these system packages on the Railway build server.
 [phases.setup]
-nixPkgs = ["ffmpeg"]
+nixPkgs = ["nodejs_22", "ffmpeg"]
