@@ -1,2 +1,5 @@
 # Remotion bundles its own ffmpeg and chromium — no extra system packages needed.
-# Node version is controlled by .node-version so nixpacks installs the right one.
+# Use npm install instead of npm ci to avoid lock file version mismatch across Node versions.
+
+[phases.install]
+cmds = ["npm install"]
