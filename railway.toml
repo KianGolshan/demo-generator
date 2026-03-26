@@ -1,6 +1,5 @@
 [build]
-builder = "nixpacks"
-buildCommand = "npm run build"
+builder = "dockerfile"
 
 [deploy]
 startCommand = "node node_modules/next/dist/bin/next start"
