@@ -195,15 +195,16 @@ registerRoot(Root);
     );
 
     // 5. Render to MP4
-    // x264Options limits encoder threads to prevent OOM on Railway containers.
-    // Default is all CPUs × lookahead=40 frames held in memory → SIGKILL at 50%.
+    // x264Preset "veryfast" uses fewer reference frames and reduced lookahead,
+    // cutting peak encode memory from ~8GB (default "medium" with 34 threads)
+    // to ~1GB — prevents SIGKILL at 50% on Railway containers.
     await renderMedia({
       composition,
       serveUrl:       bundleLocation,
       codec:          "h264",
       outputLocation: outputPath,
       inputProps,
-      x264Options:    "threads=4:lookahead_threads=2",
+      x264Preset:     "veryfast",
       onProgress: ({ progress }) => {
         const pct = Math.round(progress * 100);
         if (pct % 25 === 0) console.log(`[render:generated] Progress: ${pct}%`);
