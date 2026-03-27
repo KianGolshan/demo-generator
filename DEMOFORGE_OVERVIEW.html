@@ -162,7 +162,7 @@ hr { border: none; border-top: 1.5px solid #e2e8f0; margin: 32px 0; }
         <div class="stat-label">API routes</div>
       </div>
       <div class="card stat-box">
-        <div class="stat-num">8000</div>
+        <div class="stat-num">16000</div>
         <div class="stat-label">Max tokens for video code</div>
       </div>
       <div class="card stat-box">
@@ -466,7 +466,7 @@ await prisma.$transaction(async (tx) => {
         <p style="margin-bottom: 8px;"><strong>Input:</strong> App metadata + style + code snippets (exact field names, routes, terminology)</p>
         <p style="margin-bottom: 8px;"><strong>Output:</strong> Complete valid TypeScript/TSX — all required Remotion exports, 5–7 scenes, app-specific UI components</p>
         <p style="margin-bottom: 8px;"><strong>BYOK:</strong> First call uses app key (free tier). Subsequent calls require user's own key.</p>
-        <p><span class="badge badge-purple">claude-sonnet-4-6</span> <span class="badge badge-gray">8,000 tokens</span></p>
+        <p><span class="badge badge-purple">claude-sonnet-4-6</span> <span class="badge badge-gray">16,000 tokens</span></p>
       </div>
       <div class="card">
         <h3>Call 3 — Iteration</h3>
@@ -477,6 +477,86 @@ await prisma.$transaction(async (tx) => {
         <p style="margin-bottom: 8px;"><strong>BYOK:</strong> Always requires user's own API key. Never uses app key.</p>
         <p><span class="badge badge-purple">claude-sonnet-4-6</span> <span class="badge badge-gray">8,000 tokens</span></p>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Cost & API Exposure ── -->
+  <div class="section">
+    <h2>Cost &amp; API Exposure</h2>
+    <p style="color:#64748b; font-size:13px; margin-bottom:20px;">All calls use <strong>claude-sonnet-4-6</strong>: $3.00 / M input tokens · $15.00 / M output tokens.</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <h3>analyze-repo</h3>
+        <hr style="margin: 8px 0;">
+        <p style="margin-bottom:8px;">Input: ~19,000 tokens (25 files × 3,000 chars + system prompt)</p>
+        <p style="margin-bottom:8px;">Output: ~400 tokens (JSON summary)</p>
+        <p style="margin-bottom:8px;"><strong>~$0.063 per call</strong></p>
+        <p style="margin-bottom:4px;"><span class="badge badge-orange">App key</span> Used for all users</p>
+        <p style="font-size:12px; color:#64748b; margin-top:6px;">BYOK users now use their own key (as of latest update)</p>
+      </div>
+      <div class="card">
+        <h3>generate-composition</h3>
+        <hr style="margin: 8px 0;">
+        <p style="margin-bottom:8px;">Input: ~7,000 tokens (system prompt + project context)</p>
+        <p style="margin-bottom:8px;">Output: ~13,000 tokens (full TSX file)</p>
+        <p style="margin-bottom:8px;"><strong>~$0.22 per generation</strong></p>
+        <p style="margin-bottom:4px;"><span class="badge badge-orange">App key</span> First free gen only</p>
+        <p style="font-size:12px; color:#64748b; margin-top:6px;">After free tier: user's own key. Atomic DB transaction prevents double-use.</p>
+      </div>
+      <div class="card">
+        <h3>iterate</h3>
+        <hr style="margin: 8px 0;">
+        <p style="margin-bottom:8px;">Input: ~15,000 tokens (current TSX + change request)</p>
+        <p style="margin-bottom:8px;">Output: ~13,000 tokens (updated TSX)</p>
+        <p style="margin-bottom:8px;"><strong>~$0.24 per iteration</strong></p>
+        <p style="margin-bottom:4px;"><span class="badge badge-green">User key only</span></p>
+        <p style="font-size:12px; color:#64748b; margin-top:6px;">Zero exposure to app key. Hard-fails with 402 if no user key saved.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <h3>Worst-Case Abuse Scenarios</h3>
+      <hr style="margin: 8px 0;">
+      <table>
+        <thead>
+          <tr><th>Scenario</th><th>Mechanism</th><th>Max cost</th><th>Guardrail</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Single user hammers analyze-repo</td>
+            <td>5 calls/hr × $0.063</td>
+            <td>$0.32/hr · $7.56/day</td>
+            <td><span class="badge badge-purple">5/hr rate limit</span></td>
+          </tr>
+          <tr>
+            <td>50 bulk-created accounts analyze</td>
+            <td>50 × 5/hr × $0.063</td>
+            <td>$15.75/hr</td>
+            <td><span class="badge badge-orange">GitHub OAuth friction</span> + rate limit</td>
+          </tr>
+          <tr>
+            <td>Free generation abuse (new accounts)</td>
+            <td>N accounts × 1 × $0.22</td>
+            <td>$0.22 per account</td>
+            <td><span class="badge badge-green">Atomic DB gate</span> — solid</td>
+          </tr>
+          <tr>
+            <td>Iteration abuse</td>
+            <td>User's own key only</td>
+            <td>$0.00 to app</td>
+            <td><span class="badge badge-green">Always BYOK</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout-danger" style="margin-top: 16px;">
+      <strong>Action required:</strong> Set a hard monthly spend cap in the Anthropic console (<code>console.anthropic.com → Plans &amp; Billing → Usage limits</code>). This is the only true backstop against runaway costs — no in-code guardrail can substitute for a hard billing limit. Recommended: $50–100/month to start.
+    </div>
+
+    <div class="callout-warn" style="margin-top: 12px;">
+      <strong>Rate limiter caveat:</strong> The per-user rate limits are in-memory (single Node process). They reset on Railway redeploy and would not be shared across multiple instances. Effective for single-container deployments; replace with Redis for multi-instance scale.
     </div>
   </div>
 
@@ -578,33 +658,127 @@ Client: GET /api/demos/[id]/render/status  polled every 2s
 
   <!-- ── Security ── -->
   <div class="section">
-    <h2>Security Notes</h2>
-    <div class="grid-2">
+    <h2>Security</h2>
+
+    <!-- Auth flows -->
+    <div class="grid-2" style="margin-bottom: 16px;">
       <div class="card">
-        <h3>Fixed</h3>
+        <h3>GitHub OAuth Flow</h3>
         <hr style="margin: 8px 0;">
-        <ul style="padding-left: 16px; font-size: 13px; line-height: 2.2;">
+        <p style="margin-bottom:8px;"><code>signInWithGitHub()</code> is a Next.js Server Action — runs server-side, never in the browser.</p>
+        <ol style="padding-left:16px; font-size:13px; line-height:2.2;">
+          <li>Supabase generates OAuth URL with PKCE <code>code_verifier</code></li>
+          <li>User authorizes on GitHub — scopes: <code>read:user user:email read:org</code></li>
+          <li>GitHub redirects to <code>/auth/callback?code=…</code></li>
+          <li>Server exchanges one-time code → session via <code>exchangeCodeForSession()</code></li>
+          <li>Session stored as <strong>HttpOnly cookies</strong> — JS cannot read them</li>
+        </ol>
+        <div class="callout-success" style="margin-top:10px;">
+          Scopes are read-only. No <code>repo</code> scope = OAuth token cannot access private repositories or write anything to GitHub.
+        </div>
+        <p style="margin-top:10px; font-size:13px;"><strong>Open redirect protection:</strong> <code>?next=</code> param validated — must start with <code>/</code> and not <code>//</code>. <code>https://evil.com</code> redirects are blocked.</p>
+      </div>
+      <div class="card">
+        <h3>Session Security</h3>
+        <hr style="margin: 8px 0;">
+        <p style="margin-bottom:10px;">Every API route and the middleware calls <code>supabase.auth.<strong>getUser()</strong></code>, not <code>getSession()</code>.</p>
+        <table>
+          <tr>
+            <td><code>getSession()</code></td>
+            <td style="color:#991b1b;">Reads cookie only — no server validation, can be spoofed</td>
+          </tr>
+          <tr>
+            <td><code>getUser()</code></td>
+            <td style="color:#166534;">Live network call to Supabase — JWT cryptographically validated</td>
+          </tr>
+        </table>
+        <p style="margin-top:10px; font-size:13px;">Middleware runs <code>getUser()</code> on every request and redirects unauthenticated users away from <code>/demos/*</code> before any page renders.</p>
+        <p style="margin-top:8px; font-size:13px;"><strong>Magic link:</strong> Email OTP via Supabase — no password. No GitHub token is issued, so magic-link users use anonymous Octokit (public repos, 60 req/hr).</p>
+      </div>
+    </div>
+
+    <!-- API key storage + admin key -->
+    <div class="grid-2" style="margin-bottom: 16px;">
+      <div class="card">
+        <h3>User Anthropic Key Storage</h3>
+        <hr style="margin: 8px 0;">
+        <p style="margin-bottom:8px;">Keys are encrypted with <strong>AES-256-GCM</strong> before writing to the DB.</p>
+        <table>
+          <tr><td>Algorithm</td><td><code>aes-256-gcm</code> (authenticated encryption)</td></tr>
+          <tr><td>IV</td><td>12-byte random per save — unique every time</td></tr>
+          <tr><td>Auth tag</td><td>16 bytes — detects tampering or DB corruption</td></tr>
+          <tr><td>Stored format</td><td><code>iv:tag:ciphertext</code> (hex-joined)</td></tr>
+          <tr><td>Decryption key</td><td><code>API_KEY_ENCRYPTION_SECRET</code> env var (64 hex chars)</td></tr>
+        </table>
+        <p style="margin-top:10px; font-size:13px;"><strong>What the browser ever sees:</strong> only <code>{ hasApiKey: true/false }</code>. The plaintext key is never returned to the client, not even masked.</p>
+        <div class="callout-warn" style="margin-top:10px;">
+          <code>API_KEY_ENCRYPTION_SECRET</code> is the master decryption key for all stored user keys. If leaked, all stored keys are compromised. Treat it like a database password — rotate immediately if exposed.
+        </div>
+      </div>
+      <div class="card">
+        <h3>Admin &amp; Service Keys</h3>
+        <hr style="margin: 8px 0;">
+        <p style="margin-bottom:10px;"><code>SUPABASE_SERVICE_ROLE_KEY</code> bypasses Row Level Security. It is only instantiated in <code>createAdminClient()</code> inside <code>src/lib/supabase/server.ts</code> and used exclusively for uploading rendered MP4s to Storage.</p>
+        <p style="margin-bottom:10px;">It is <strong>never</strong> in any client-side file, never sent to the browser, and never logged.</p>
+        <p style="font-size:13px; margin-bottom:6px;"><strong>What each key can do:</strong></p>
+        <table>
+          <tr><td><code>SUPABASE_ANON_KEY</code></td><td>Public — safe in browser. RLS enforces access.</td></tr>
+          <tr><td><code>SERVICE_ROLE_KEY</code></td><td>Bypasses RLS — server only, never exposed.</td></tr>
+          <tr><td><code>ANTHROPIC_API_KEY</code></td><td>App-funded Claude calls — free tier + analyses.</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Fixed / Watch table -->
+    <div class="grid-2" style="margin-bottom: 16px;">
+      <div class="card">
+        <h3>Implemented Protections</h3>
+        <hr style="margin: 8px 0;">
+        <ul style="padding-left: 16px; font-size: 13px; line-height: 2.3;">
           <li>✅ Open redirect in <code>/auth/callback</code> — <code>next</code> param validated</li>
-          <li>✅ TOCTOU on free generation — Prisma transaction</li>
+          <li>✅ All auth uses <code>getUser()</code> — live JWT validation, not cookie-read</li>
+          <li>✅ TOCTOU on free generation — Prisma <code>$transaction</code></li>
           <li>✅ Concurrent render race — 409 guard</li>
-          <li>✅ Storage orphans — DELETE cleans up files</li>
-          <li>✅ <code>GeneratedDemo.tsx</code> gitignored — no per-user code committed</li>
+          <li>✅ User API keys: AES-256-GCM at rest, never returned to client</li>
+          <li>✅ Rate limits: 5/hr analyze, 10/hr generate (per user, per process)</li>
+          <li>✅ analyze-repo uses user's own key when available (BYOK passthrough)</li>
+          <li>✅ Storage orphans — DELETE cleans screenshots + video</li>
+          <li>✅ <code>GeneratedDemo.tsx</code> gitignored — per-user code not committed</li>
+          <li>✅ GitHub OAuth scopes are read-only — no write access granted</li>
         </ul>
       </div>
       <div class="card">
-        <h3>Known / Watch</h3>
+        <h3>Known Limitations / Watch</h3>
         <hr style="margin: 8px 0;">
-        <ul style="padding-left: 16px; font-size: 13px; line-height: 2.2;">
-          <li>⚠️ No per-user rate limiting on AI endpoints</li>
-          <li>⚠️ <code>API_KEY_ENCRYPTION_SECRET</code> must be kept secret — rotate if leaked</li>
-          <li>⚠️ Supabase Storage is public by URL (intentional for sharing)</li>
-          <li>⚠️ <code>read:org</code> OAuth scope is broader than necessary</li>
+        <ul style="padding-left: 16px; font-size: 13px; line-height: 2.3;">
+          <li>⚠️ Rate limits are in-memory — reset on redeploy, not shared across instances</li>
+          <li>⚠️ <code>API_KEY_ENCRYPTION_SECRET</code> has no rotation mechanism — re-encrypt all keys if rotated</li>
+          <li>⚠️ Supabase Storage videos are public by URL (intentional — enables share page)</li>
+          <li>⚠️ Magic link users can create many accounts with email addresses (bulk free gen risk)</li>
           <li>⚠️ No <code>Content-Security-Policy</code> header configured</li>
+          <li>⚠️ No hard Anthropic spend cap in code — must be set in Anthropic console</li>
         </ul>
       </div>
     </div>
-    <div class="callout-danger" style="margin-top: 16px;">
-      <strong>Critical:</strong> Never commit <code>.env</code> to version control. The file contains live Supabase credentials, API keys, and the AES encryption secret. Rotate any accidentally exposed secrets immediately in Supabase Dashboard → Database → Reset password.
+
+    <!-- User-facing assurances -->
+    <div class="card" style="margin-bottom: 16px;">
+      <h3>What Users Can Be Told</h3>
+      <hr style="margin: 8px 0;">
+      <table>
+        <thead><tr><th>User concern</th><th>Answer</th></tr></thead>
+        <tbody>
+          <tr><td>Can my GitHub credentials be stolen?</td><td>No — OAuth never touches passwords. Tokens live in HttpOnly cookies, inaccessible to JavaScript.</td></tr>
+          <tr><td>Can DemoForge access my private repos?</td><td>No — only <code>read:user email read:org</code> scopes. No <code>repo</code> scope, so private repos cannot be read.</td></tr>
+          <tr><td>Can my Anthropic API key be seen after saving?</td><td>No — the API only ever returns a boolean <code>hasApiKey</code>. The plaintext key is never sent to the browser.</td></tr>
+          <tr><td>Can my API key be tampered with in the database?</td><td>No — the GCM auth tag would cause decryption to throw, rejecting any modified ciphertext.</td></tr>
+          <tr><td>Can someone else's demos see my data?</td><td>No — every DB query is scoped to <code>userId</code> and ownership is verified on every route.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout-danger">
+      <strong>Critical:</strong> Never commit <code>.env</code> to version control. It contains live Supabase credentials, the Anthropic API key, and the AES encryption secret. Rotate any accidentally exposed secrets immediately: Supabase Dashboard → Settings → API → regenerate keys; Anthropic console → API Keys → revoke and reissue.
     </div>
   </div>
 
