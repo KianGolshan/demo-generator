@@ -123,14 +123,14 @@ Two-column cards side by side:
 ### Spring entrance:
 \`\`\`ts
 const s = spring({ frame: Math.max(0, frame - delay), fps, config: { damping: 14, stiffness: 120 } });
-// opacity: s, transform: \`translateY(\${(1-s)*40}px)\`
+// opacity: s, transform: 'translateY(' + ((1-s)*40) + 'px)'
 \`\`\`
 
 ### Staggered rows (use for ALL list/table items):
 \`\`\`ts
 items.map((item, i) => {
   const s = spring({ frame: Math.max(0, frame - startFrame - i * 16), fps, config: { damping: 18, stiffness: 140 } });
-  return <div key={i} style={{ opacity: s, transform: \`translateX(\${(1-s)*24}px)\` }}>{...}</div>;
+  return <div key={i} style={{ opacity: s, transform: 'translateX(' + ((1-s)*24) + 'px)' }}>{...}</div>;
 })
 \`\`\`
 
@@ -153,7 +153,7 @@ const cursorVisible = frame < clickFrame && Math.floor(frame / 15) % 2 === 0;
 ### Spinner:
 \`\`\`ts
 const spinDeg = (frame - spinStart) * 12; // 12 deg/frame = 360°/s
-// border: \`3px solid rgba(255,255,255,0.1)\`, borderTop: \`3px solid \${ACCENT}\`, transform: \`rotate(\${spinDeg}deg)\`
+// border: '3px solid rgba(255,255,255,0.1)', borderTop: '3px solid ' + ACCENT, transform: 'rotate(' + spinDeg + 'deg)'
 \`\`\`
 
 ### Floating particles (end card):
@@ -188,7 +188,8 @@ Array.from({ length: 22 }).map((_: unknown, i: number) => {
 - CSS values with units are STRINGS: \`padding: '16px'\` NOT \`padding: 16px\`
 - \`fontSize: '24px'\`, \`borderRadius: '8px'\`, \`width: '100%'\`, \`margin: '0 auto'\`
 - Only UNITLESS numbers are allowed: \`opacity: 0.8\`, \`zIndex: 1\`, \`flex: 1\`
-- Template literals for computed values: \`width: \\\`\${value}px\\\`\`
+- Computed CSS values: string concatenation ONLY: \`transform: 'translateY(' + val + 'px)'\`, \`borderBottom: '1px solid ' + BORDER\`
+- NEVER use template literals in style objects — the bundler cannot parse them (this causes render failures)
 - NEVER write bare CSS like \`16px\` as a JS value — it is a syntax error
 
 ## CRITICAL RULES:
@@ -197,7 +198,8 @@ Array.from({ length: 22 }).map((_: unknown, i: number) => {
 3. All animations driven by frame number — NO CSS animations or transitions
 4. Build the app's REAL UI — use exact field names, column headers, and domain data from the code snippets
 5. Screenshots are reference only — DO NOT use <Img> tags
-6. Every scene must be visually impressive — this is a marketing video`;
+6. Every scene must be visually impressive — this is a marketing video
+7. NEVER use template literals (\`...\`) in style objects — use string concatenation: 'rotate(' + deg + 'deg)' NOT \`rotate(\${deg}deg)\``;
 
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
