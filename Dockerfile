@@ -3,7 +3,6 @@ FROM node:20.19-slim
 WORKDIR /app
 
 # OpenSSL (Prisma) + Chrome Headless Shell system library dependencies
-# node:20.19-slim is Debian Bookworm — libasound2t64 is the Bookworm name for libasound2
 RUN apt-get update -y && apt-get install -y \
   openssl \
   libnspr4 \
@@ -23,8 +22,8 @@ RUN apt-get update -y && apt-get install -y \
   libpango-1.0-0 \
   libcairo2 \
   libglib2.0-0 \
-  libasound2t64 \
   fonts-liberation \
+  && (apt-get install -y libasound2t64 || apt-get install -y libasound2 || true) \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
