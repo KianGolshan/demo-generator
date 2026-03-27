@@ -139,7 +139,6 @@ describe("fixDoubleQuotedInterpolations", () => {
 describe("fixUnescapedApostrophes", () => {
   it("fixes apostrophe in const declaration", () => {
     // The apostrophe in "Acme's" terminates the string, leaving 's SaaS' as tokens
-    const input = "const TITLE_QUERY = 'Launchpad — Acme\\'s SaaS Onboarding';";
     // Note: in actual generated code there's no backslash — Claude writes it unescaped
     const badInput = "const TITLE_QUERY = 'Launchpad — Acme's SaaS Onboarding';";
     const result = sanitizeGeneratedCode(badInput);
