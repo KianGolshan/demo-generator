@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { callClaude } from "@/lib/claude";
 import { rateLimit } from "@/lib/rateLimit";
+import { getUserApiKey } from "@/lib/userProfile";
 import type { ApiError, CodeSummary } from "@/types";
 import { Octokit } from "@octokit/rest";
 import { NextRequest, NextResponse } from "next/server";
@@ -121,8 +122,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    // Rate limit — 20 analyses per user per hour
-    if (!rateLimit("analyze", user.id, { max: 20, windowMs: 60 * 60 * 1000 })) {
+    // Rate limit — 5 analyses per user per hour (against app key abuse)
+    if (!rateLimit("analyze", user.id, { max: 5, windowMs: 60 * 60 * 1000 })) {
       return NextResponse.json<ApiError>(
         { error: "Too many requests. Try again later.", code: "RATE_LIMITED" },
         { status: 429 }
@@ -226,13 +227,16 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     // 4. Build the Claude prompt
     const userPrompt = buildPrompt(repoFullName, fileContents);
 
-    // 5. Call Claude
+    // 5. Call Claude — use user's own key if they have one, else app key
+    const userApiKey = await getUserApiKey(user.id);
+
     let rawJson: string;
     try {
       rawJson = await callClaude({
-        system: SYSTEM_PROMPT,
-        user:   userPrompt,
+        system:    SYSTEM_PROMPT,
+        user:      userPrompt,
         maxTokens: 1500,
+        apiKey:    userApiKey ?? undefined,
       });
     } catch (err) {
       console.error("[analyze-repo] Claude API error:", err);
