@@ -1,47 +1,51 @@
 /**
- * Fixes common Claude code-generation mistakes in Remotion TSX files.
+ * Fixes common Claude code-generation mistakes in Remotion TSX files
+ * that cause Remotion's esbuild-loader to fail at bundle time.
  *
  * Two classes of errors:
  *
- * 1. Unquoted CSS unit values:
+ * 1. Template literals anywhere in the file:
+ *    Remotion's esbuild-loader cannot parse template literals — not even inside
+ *    ternary expressions in style objects.
+ *    ✓ tab === active ? '2px solid ' + ACCENT : '2px solid transparent'
+ *    ✗ tab === active ? `2px solid ${ACCENT}` : '2px solid transparent'
+ *
+ * 2. Unquoted CSS unit values:
  *    ✓ padding: '16px'
  *    ✗ padding: 16px   ← esbuild sees "16" then unexpected token "px"
- *
- * 2. Template literals in style objects:
- *    ✓ transform: 'translateY(' + val + 'px)'
- *    ✗ transform: `translateY(${val}px)`  ← Remotion's esbuild-loader fails on these
  */
 
 /**
- * Converts template literals used as CSS property values to string concatenation.
- * Remotion's bundler (esbuild-loader) cannot parse template literals in style objects.
+ * Converts ALL template literals in the file to string concatenation.
+ * Handles template literals in any position — direct property values,
+ * ternary branches, function arguments, variable declarations, etc.
  *
- * e.g.:  borderBottom: `1px solid ${BORDER}`
- * →      borderBottom: '1px solid ' + BORDER
- *
- * e.g.:  transform: `translateY(${(1-s)*40}px)`
- * →      transform: 'translateY(' + ((1-s)*40) + 'px)'
+ * e.g.:  `2px solid ${ACCENT}`          →  "2px solid " + ACCENT
+ * e.g.:  `translateY(${(1-s)*40}px)`    →  "translateY(" + (1-s)*40 + "px)"
+ * e.g.:  `rotate(${deg}deg)`            →  "rotate(" + deg + "deg)"
  */
 function sanitizeTemplateLiterals(code: string): string {
+  // Match any template literal (non-nested — generated Remotion code never nests them)
   return code.replace(
-    /(\w+):\s*`([^`]*)`/g,
-    (_match, prop: string, content: string) => {
+    /`([^`]*)`/g,
+    (_match, content: string) => {
       const parts: string[] = [];
-      const interpolationRegex = /\$\{([^}]+)\}/g;
+      const interp = /\$\{([^}]+)\}/g;
       let lastIndex = 0;
-      let match: RegExpExecArray | null;
+      let m: RegExpExecArray | null;
 
-      while ((match = interpolationRegex.exec(content)) !== null) {
-        const literal = content.slice(lastIndex, match.index);
-        if (literal) parts.push(`'${literal}'`);
-        parts.push(match[1]);
-        lastIndex = match.index + match[0].length;
+      while ((m = interp.exec(content)) !== null) {
+        const lit = content.slice(lastIndex, m.index);
+        if (lit) parts.push(JSON.stringify(lit)); // handles single-quote escaping
+        parts.push(m[1]);                         // raw expression e.g. `(1-s)*40`
+        lastIndex = m.index + m[0].length;
       }
       const remaining = content.slice(lastIndex);
-      if (remaining) parts.push(`'${remaining}'`);
+      if (remaining) parts.push(JSON.stringify(remaining));
 
-      if (parts.length === 0) return `${prop}: ''`;
-      return `${prop}: ${parts.join(' + ')}`;
+      if (parts.length === 0) return "''";
+      if (parts.length === 1) return parts[0];
+      return parts.join(' + ');
     }
   );
 }
@@ -59,7 +63,7 @@ function sanitizeUnquotedUnits(code: string): string {
 }
 
 export function sanitizeGeneratedCode(code: string): string {
-  // Order matters: fix template literals first (they may contain unit values),
-  // then fix any remaining bare unit values.
+  // Order matters: fix template literals first (they may also contain bare unit values),
+  // then fix any remaining unquoted unit values.
   return sanitizeUnquotedUnits(sanitizeTemplateLiterals(code));
 }
