@@ -278,7 +278,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
       generatedCode = await callClaude({
         system:    SYSTEM_PROMPT,
         user:      userPrompt,
-        maxTokens: 8000,
+        maxTokens: 16000,
         apiKey:    claudeApiKey,
       });
     } catch (err) {

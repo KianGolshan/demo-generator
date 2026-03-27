@@ -51,11 +51,9 @@ export async function callClaude({
 
   const latencyMs = Date.now() - start;
 
-  if (process.env.NODE_ENV === "development") {
-    console.log(
-      `[claude] model=${model} input_tokens=${message.usage.input_tokens} output_tokens=${message.usage.output_tokens} latency=${latencyMs}ms`
-    );
-  }
+  console.log(
+    `[claude] model=${model} input=${message.usage.input_tokens} output=${message.usage.output_tokens} stop=${message.stop_reason} latency=${latencyMs}ms`
+  );
 
   const block = message.content[0];
   if (block.type !== "text") {
