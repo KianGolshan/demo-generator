@@ -69,11 +69,42 @@ function sanitizeUnquotedUnits(code: string): string {
   );
 }
 
+/**
+ * Fixes const/let/var string declarations where an unescaped apostrophe
+ * terminates the single-quoted string early.
+ *
+ * e.g.:  const TITLE = 'Launchpad — Acme's SaaS';
+ * →      const TITLE = "Launchpad — Acme's SaaS";
+ *
+ * Strategy: for any line with exactly 3 single quotes (one opening, one
+ * false-close at the apostrophe, one real closing), convert the value
+ * from single-quoted to double-quoted so the apostrophe is safe.
+ */
+function fixUnescapedApostrophes(code: string): string {
+  return code
+    .split('\n')
+    .map((line) => {
+      // Only touch lines with exactly 3 single quotes — the signature of one
+      // unescaped apostrophe inside an otherwise normal single-quoted string.
+      if (line.split("'").length - 1 !== 3) return line;
+
+      // Match: const/let/var VAR = 'content' (greedy — captures up to LAST quote)
+      return line.replace(
+        /^(\s*(?:const|let|var)\s+\w+\s*=\s*)'(.*)'([,;]?\s*)$/,
+        (_m, pre, content, end) =>
+          `${pre}"${content.replace(/"/g, '\\"')}"${end}`,
+      );
+    })
+    .join('\n');
+}
+
 export function sanitizeGeneratedCode(code: string): string {
   // Step 1: strip fences FIRST — backticks in ``` would corrupt subsequent steps
   const stripped = stripMarkdownFences(code);
   // Step 2: convert template literals to string concatenation
   const noTemplateLiterals = sanitizeTemplateLiterals(stripped);
-  // Step 3: fix any remaining bare CSS unit values
-  return sanitizeUnquotedUnits(noTemplateLiterals);
+  // Step 3: fix unescaped apostrophes in single-quoted string declarations
+  const noApostropheErrors = fixUnescapedApostrophes(noTemplateLiterals);
+  // Step 4: fix any remaining bare CSS unit values
+  return sanitizeUnquotedUnits(noApostropheErrors);
 }

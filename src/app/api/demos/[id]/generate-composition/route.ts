@@ -183,6 +183,7 @@ Array.from({ length: 22 }).map((_: unknown, i: number) => {
 - No if/else in JSX — use ternary (\`condition ? a : b\`) or \`&&\`
 - No useState, no useEffect — only useCurrentFrame() and useVideoConfig()
 - All frame arithmetic: use Math.max(0, frame - offset) before passing to spring()
+- String constants with UI text (labels, queries, names) MUST use double quotes if the text could contain an apostrophe: \`const QUERY = "Acme's Product"\` NOT \`const QUERY = 'Acme\\'s Product'\`
 
 ## CSS value rules (MOST COMMON SOURCE OF SYNTAX ERRORS):
 - CSS values with units are STRINGS: \`padding: '16px'\` NOT \`padding: 16px\`
