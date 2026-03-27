@@ -152,6 +152,9 @@ const Root: React.FC = () => (
 registerRoot(Root);
 `;
     await fs.writeFile(genEntryPath, entryContent, "utf-8");
+    // Log lines 45-65 of generated code so we can diagnose syntax errors
+    const lines = generatedCode.split("\n");
+    console.log(`[render:generated] GeneratedDemo lines 45-65:\n${lines.slice(44, 65).map((l, i) => `${i + 45}: ${l}`).join("\n")}`);
     console.log(`[render:generated] Wrote per-demo files for ${demoId}`);
 
     // 2. Dynamically import Remotion modules
