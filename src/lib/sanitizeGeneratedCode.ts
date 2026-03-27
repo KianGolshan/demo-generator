@@ -2,30 +2,37 @@
  * Fixes common Claude code-generation mistakes in Remotion TSX files
  * that cause Remotion's esbuild-loader to fail at bundle time.
  *
- * Two classes of errors:
- *
- * 1. Template literals anywhere in the file:
- *    Remotion's esbuild-loader cannot parse template literals — not even inside
- *    ternary expressions in style objects.
- *    ✓ tab === active ? '2px solid ' + ACCENT : '2px solid transparent'
- *    ✗ tab === active ? `2px solid ${ACCENT}` : '2px solid transparent'
- *
- * 2. Unquoted CSS unit values:
- *    ✓ padding: '16px'
- *    ✗ padding: 16px   ← esbuild sees "16" then unexpected token "px"
+ * Applied in this order:
+ *   1. Strip markdown fences (must happen first — fences contain backticks that
+ *      would be corrupted by the template-literal sanitizer)
+ *   2. Convert template literals to string concatenation
+ *   3. Fix unquoted CSS unit values
  */
 
 /**
+ * Strips markdown code fences if Claude wrapped the code in them.
+ * Must run BEFORE sanitizeTemplateLiterals — backticks in ``` fences would
+ * otherwise be converted to empty string literals, corrupting the entire file.
+ *
+ *   ```tsx          →  (removed)
+ *   import React…      import React…
+ *   ```             →  (removed)
+ */
+function stripMarkdownFences(code: string): string {
+  const match = code.match(/```(?:tsx?|typescript|javascript|js)?\n?([\s\S]*?)```/i);
+  return match ? match[1].trim() : code.trim();
+}
+
+/**
  * Converts ALL template literals in the file to string concatenation.
- * Handles template literals in any position — direct property values,
- * ternary branches, function arguments, variable declarations, etc.
+ * Remotion's bundler (esbuild-loader) cannot parse template literals,
+ * including those in ternary expressions inside style objects.
  *
  * e.g.:  `2px solid ${ACCENT}`          →  "2px solid " + ACCENT
  * e.g.:  `translateY(${(1-s)*40}px)`    →  "translateY(" + (1-s)*40 + "px)"
  * e.g.:  `rotate(${deg}deg)`            →  "rotate(" + deg + "deg)"
  */
 function sanitizeTemplateLiterals(code: string): string {
-  // Match any template literal (non-nested — generated Remotion code never nests them)
   return code.replace(
     /`([^`]*)`/g,
     (_match, content: string) => {
@@ -36,8 +43,8 @@ function sanitizeTemplateLiterals(code: string): string {
 
       while ((m = interp.exec(content)) !== null) {
         const lit = content.slice(lastIndex, m.index);
-        if (lit) parts.push(JSON.stringify(lit)); // handles single-quote escaping
-        parts.push(m[1]);                         // raw expression e.g. `(1-s)*40`
+        if (lit) parts.push(JSON.stringify(lit));
+        parts.push(m[1]);
         lastIndex = m.index + m[0].length;
       }
       const remaining = content.slice(lastIndex);
@@ -63,7 +70,10 @@ function sanitizeUnquotedUnits(code: string): string {
 }
 
 export function sanitizeGeneratedCode(code: string): string {
-  // Order matters: fix template literals first (they may also contain bare unit values),
-  // then fix any remaining unquoted unit values.
-  return sanitizeUnquotedUnits(sanitizeTemplateLiterals(code));
+  // Step 1: strip fences FIRST — backticks in ``` would corrupt subsequent steps
+  const stripped = stripMarkdownFences(code);
+  // Step 2: convert template literals to string concatenation
+  const noTemplateLiterals = sanitizeTemplateLiterals(stripped);
+  // Step 3: fix any remaining bare CSS unit values
+  return sanitizeUnquotedUnits(noTemplateLiterals);
 }
