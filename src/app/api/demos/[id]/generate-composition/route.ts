@@ -50,8 +50,8 @@ Your output is a SINGLE TypeScript file:
 ## Required exports (EXACT names):
 export const GENERATED_DURATION = [sum of all scene durations];
 export const GENERATED_FPS = 30;
-export const GENERATED_WIDTH = 1920;
-export const GENERATED_HEIGHT = 1080;
+export const GENERATED_WIDTH = 1280;
+export const GENERATED_HEIGHT = 720;
 export const GeneratedDemo: React.FC<{ screenshotUrls: string[] }> = () => { ... };
 
 ## Allowed imports ONLY:
