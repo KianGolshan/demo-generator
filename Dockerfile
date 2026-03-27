@@ -33,6 +33,12 @@ COPY prisma.config.ts ./
 
 RUN npm install
 
+# Pre-download Chrome Headless Shell during image build so it's baked in.
+# Avoids an 87MB download on the first render request in production,
+# and eliminates runtime download failures (network errors, slow starts).
+# The binary lands in node_modules/.remotion/ which persists in the image.
+RUN node_modules/.bin/remotion browser ensure
+
 COPY . .
 
 # Declare build args so Railway passes NEXT_PUBLIC vars into the Docker build.

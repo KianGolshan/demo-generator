@@ -24,7 +24,10 @@
  */
 function stripMarkdownFences(code: string): string {
   const match = code.match(/```(?:tsx?|typescript|javascript|js)?\n?([\s\S]*?)```/i);
-  return match ? match[1].trim() : code.trim();
+  // When fences found, trim the extracted content (removes surrounding newlines).
+  // When no fences, return as-is — trimming would strip meaningful indentation
+  // from individual lines if the sanitizer is called on a code snippet.
+  return match ? match[1].trim() : code;
 }
 
 // ─── Step 2 ───────────────────────────────────────────────────────────────────
@@ -143,8 +146,11 @@ function fixUnescapedApostrophes(code: string): string {
  * fontSize: 24px →  fontSize: '24px'
  */
 function sanitizeUnquotedUnits(code: string): string {
+  // NOTE: \b does not work after `%` because % is a non-word character.
+  // Use (?=[^a-zA-Z0-9]|$) instead — matches any non-alphanumeric char or end of string.
+  // This correctly handles all units including % (width: 100% → width: '100%').
   return code.replace(
-    /(\w+):\s*(-?[\d.]+)(px|rem|em|vh|vw|%|pt|pc|ch|ex|vmin|vmax|fr|deg|rad|turn|s|ms)\b(?!\s*['"`])/g,
+    /(\w+):\s*(-?[\d.]+)(px|rem|em|vh|vw|%|pt|pc|ch|ex|vmin|vmax|fr|deg|rad|turn|s|ms)(?=[^a-zA-Z0-9]|$)(?!\s*['"`])/g,
     (_match, key, num, unit) => `${key}: '${num}${unit}'`
   );
 }
