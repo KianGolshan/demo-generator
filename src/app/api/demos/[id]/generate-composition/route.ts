@@ -294,7 +294,9 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
 
     // Basic sanity check — must export GeneratedDemo and GENERATED_DURATION
     if (!cleaned.includes("GeneratedDemo") || !cleaned.includes("GENERATED_DURATION")) {
-      console.error("[generate-composition] Missing required exports. Raw:", cleaned.slice(0, 400));
+      console.error("[generate-composition] Missing required exports.");
+      console.error("[generate-composition] Raw response (first 800 chars):", generatedCode.slice(0, 800));
+      console.error("[generate-composition] Cleaned (first 400 chars):", cleaned.slice(0, 400));
       return NextResponse.json<ApiError>(
         { error: "AI returned invalid code. Please try again.", code: "PARSE_ERROR" },
         { status: 502 }
@@ -393,11 +395,12 @@ function buildCodeGenPrompt(args: {
 
 /**
  * Strips markdown code fences from Claude's response if it added them.
+ * Handles the case where Claude adds explanation text before the code block.
  */
 function stripMarkdown(code: string): string {
-  // Remove ```typescript ... ``` or ```tsx ... ``` or ``` ... ```
-  return code
-    .replace(/^```(?:tsx?|typescript|javascript|js)?\n?/i, "")
-    .replace(/\n?```\s*$/i, "")
-    .trim();
+  // If there's a fenced code block anywhere, extract just the code inside it
+  const fenceMatch = code.match(/```(?:tsx?|typescript|javascript|js)?\n?([\s\S]*?)```/i);
+  if (fenceMatch) return fenceMatch[1].trim();
+  // No fences — return as-is (already raw code)
+  return code.trim();
 }
