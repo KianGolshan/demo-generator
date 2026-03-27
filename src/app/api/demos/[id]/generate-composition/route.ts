@@ -183,6 +183,13 @@ Array.from({ length: 22 }).map((_: unknown, i: number) => {
 - No useState, no useEffect — only useCurrentFrame() and useVideoConfig()
 - All frame arithmetic: use Math.max(0, frame - offset) before passing to spring()
 
+## CSS value rules (MOST COMMON SOURCE OF SYNTAX ERRORS):
+- CSS values with units are STRINGS: \`padding: '16px'\` NOT \`padding: 16px\`
+- \`fontSize: '24px'\`, \`borderRadius: '8px'\`, \`width: '100%'\`, \`margin: '0 auto'\`
+- Only UNITLESS numbers are allowed: \`opacity: 0.8\`, \`zIndex: 1\`, \`flex: 1\`
+- Template literals for computed values: \`width: \\\`\${value}px\\\`\`
+- NEVER write bare CSS like \`16px\` as a JS value — it is a syntax error
+
 ## CRITICAL RULES:
 1. Output ONLY TypeScript code — NO markdown fences, NO explanation, NO prose
 2. GENERATED_DURATION must exactly equal the sum of all Sequence durationInFrames
@@ -303,11 +310,14 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
       );
     }
 
+    // Sanitize common Claude mistake: unquoted CSS values like `padding: 16px`
+    const sanitized = sanitizeCssValues(cleaned);
+
     // Save to DB and mark as config_generated so the render button enables
     await prisma.demoProject.update({
       where: { id },
       data:  {
-        generatedCode,
+        generatedCode: sanitized,
         renderStatus: "config_generated",
       },
     });
@@ -391,6 +401,20 @@ function buildCodeGenPrompt(args: {
   );
 
   return sections.join("\n");
+}
+
+/**
+ * Fixes the most common Claude mistake: unquoted CSS unit values.
+ * e.g. `padding: 16px` → `padding: '16px'`
+ * Only applies inside object literal contexts (after `: ` before `,` or `}`).
+ */
+function sanitizeCssValues(code: string): string {
+  // Match patterns like: `someKey: 16px` or `someKey: 1.5rem` or `someKey: 50%`
+  // and wrap the value in quotes if not already quoted or a template literal
+  return code.replace(
+    /(\w+):\s*(-?[\d.]+(?:px|rem|em|vh|vw|%|pt|pc|ch|ex|vmin|vmax|fr|deg|rad|turn|s|ms))\b/g,
+    (_match, key, value) => `${key}: '${value}'`
+  );
 }
 
 /**
