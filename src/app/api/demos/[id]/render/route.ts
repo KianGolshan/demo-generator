@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { sanitizeGeneratedCode } from "@/lib/sanitizeGeneratedCode";
 import type { ApiError, DemoConfig } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
@@ -128,8 +129,9 @@ async function runGeneratedRender({
     console.log(`[render:generated] Starting generated render for demo ${demoId}`);
     const start = Date.now();
 
-    // 1. Write per-demo files — isolated so concurrent renders don't collide
-    await fs.writeFile(genDemoPath, generatedCode, "utf-8");
+    // 1. Write per-demo files — sanitize first to fix any unquoted CSS values
+    const safeCode = sanitizeGeneratedCode(generatedCode);
+    await fs.writeFile(genDemoPath, safeCode, "utf-8");
 
     const entryContent = `import React from "react";
 import { registerRoot } from "remotion";
@@ -152,9 +154,6 @@ const Root: React.FC = () => (
 registerRoot(Root);
 `;
     await fs.writeFile(genEntryPath, entryContent, "utf-8");
-    // Log lines 45-65 of generated code so we can diagnose syntax errors
-    const lines = generatedCode.split("\n");
-    console.log(`[render:generated] GeneratedDemo lines 45-65:\n${lines.slice(44, 65).map((l, i) => `${i + 45}: ${l}`).join("\n")}`);
     console.log(`[render:generated] Wrote per-demo files for ${demoId}`);
 
     // 2. Dynamically import Remotion modules

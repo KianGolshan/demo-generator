@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { callClaude } from "@/lib/claude";
 import { getUserApiKey, reserveFreeGeneration } from "@/lib/userProfile";
 import { rateLimit } from "@/lib/rateLimit";
+import { sanitizeGeneratedCode } from "@/lib/sanitizeGeneratedCode";
 import type { ApiError, CodeSummary } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -311,7 +312,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
     }
 
     // Sanitize common Claude mistake: unquoted CSS values like `padding: 16px`
-    const sanitized = sanitizeCssValues(cleaned);
+    const sanitized = sanitizeGeneratedCode(cleaned);
 
     // Save to DB and mark as config_generated so the render button enables
     await prisma.demoProject.update({
@@ -401,20 +402,6 @@ function buildCodeGenPrompt(args: {
   );
 
   return sections.join("\n");
-}
-
-/**
- * Fixes the most common Claude mistake: unquoted CSS unit values.
- * e.g. `padding: 16px` → `padding: '16px'`
- * Only applies inside object literal contexts (after `: ` before `,` or `}`).
- */
-function sanitizeCssValues(code: string): string {
-  // Match patterns like: `someKey: 16px` or `someKey: 1.5rem` or `someKey: 50%`
-  // and wrap the value in quotes if not already quoted or a template literal
-  return code.replace(
-    /(\w+):\s*(-?[\d.]+(?:px|rem|em|vh|vw|%|pt|pc|ch|ex|vmin|vmax|fr|deg|rad|turn|s|ms))\b/g,
-    (_match, key, value) => `${key}: '${value}'`
-  );
 }
 
 /**
