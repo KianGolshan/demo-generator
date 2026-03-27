@@ -232,6 +232,22 @@ registerRoot(Root);
     console.log(`[render:generated] Done. videoUrl: ${urlData.publicUrl}`);
   } catch (err) {
     console.error("[render:generated] Render failed:", err);
+    // Auto-log the problematic lines when esbuild reports a syntax error
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const lineMatch = errMsg.match(/:(\d+):(\d+): ERROR:/);
+    if (lineMatch) {
+      const lineNum = parseInt(lineMatch[1]);
+      const col = parseInt(lineMatch[2]);
+      try {
+        const src = await fs.readFile(genDemoPath, "utf-8");
+        const lines = src.split("\n");
+        const start = Math.max(0, lineNum - 4);
+        const excerpt = lines.slice(start, lineNum + 2)
+          .map((l, i) => `${start + i + 1}${start + i + 1 === lineNum ? " >" : "  "}: ${l}`)
+          .join("\n");
+        console.error(`[render:generated] Syntax error at line ${lineNum} col ${col}:\n${excerpt}`);
+      } catch { /* file already deleted or unreadable */ }
+    }
     await prisma.demoProject.update({
       where: { id: demoId },
       data:  { renderStatus: "failed" },
