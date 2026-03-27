@@ -1,36 +1,42 @@
 /**
  * Fixes common Claude code-generation mistakes in Remotion TSX files
- * that cause Remotion's esbuild-loader to fail at bundle time.
+ * that cause Remotion's esbuild-loader to fail at bundle time,
+ * or produce incorrect visual output.
  *
- * Applied in this order:
- *   1. Strip markdown fences (must happen first — fences contain backticks that
- *      would be corrupted by the template-literal sanitizer)
- *   2. Convert template literals to string concatenation
- *   3. Fix unquoted CSS unit values
+ * Pipeline (ORDER MATTERS):
+ *   1. stripMarkdownFences    — must be first; fences contain backticks that
+ *                               would be mangled by step 2
+ *   2. sanitizeTemplateLiterals — convert ALL `...` to string concatenation
+ *   3. fixDoubleQuotedInterpolations — "text ${x}" → 'text ' + x (visual bug)
+ *   4. fixUnescapedApostrophes  — 'it's' → "it's" (compile error)
+ *   5. sanitizeUnquotedUnits    — prop: 16px → prop: '16px' (compile error)
  */
 
+// ─── Step 1 ───────────────────────────────────────────────────────────────────
+
 /**
- * Strips markdown code fences if Claude wrapped the code in them.
- * Must run BEFORE sanitizeTemplateLiterals — backticks in ``` fences would
- * otherwise be converted to empty string literals, corrupting the entire file.
+ * Strips markdown code fences if Claude wrapped the output in them.
  *
- *   ```tsx          →  (removed)
- *   import React…      import React…
- *   ```             →  (removed)
+ * MUST run before sanitizeTemplateLiterals. The three backticks in ```
+ * would be processed as an empty template literal (`` `` → '') followed by
+ * a large template literal containing the entire file, producing
+ * ''"tsx\n...code..."'' — invalid JavaScript.
  */
 function stripMarkdownFences(code: string): string {
   const match = code.match(/```(?:tsx?|typescript|javascript|js)?\n?([\s\S]*?)```/i);
   return match ? match[1].trim() : code.trim();
 }
 
+// ─── Step 2 ───────────────────────────────────────────────────────────────────
+
 /**
- * Converts ALL template literals in the file to string concatenation.
- * Remotion's bundler (esbuild-loader) cannot parse template literals,
+ * Converts ALL template literals to string concatenation.
+ * Remotion's esbuild-loader cannot parse backtick template literals,
  * including those in ternary expressions inside style objects.
  *
- * e.g.:  `2px solid ${ACCENT}`          →  "2px solid " + ACCENT
- * e.g.:  `translateY(${(1-s)*40}px)`    →  "translateY(" + (1-s)*40 + "px)"
- * e.g.:  `rotate(${deg}deg)`            →  "rotate(" + deg + "deg)"
+ * `2px solid ${ACCENT}`       →  "2px solid " + ACCENT
+ * `translateY(${(1-s)*40}px)` →  "translateY(" + (1-s)*40 + "px)"
+ * `rotate(${deg}deg)`         →  "rotate(" + deg + "deg)"
  */
 function sanitizeTemplateLiterals(code: string): string {
   return code.replace(
@@ -57,10 +63,84 @@ function sanitizeTemplateLiterals(code: string): string {
   );
 }
 
+// ─── Step 3 ───────────────────────────────────────────────────────────────────
+
 /**
- * Fixes unquoted CSS unit values.
+ * Fixes double-quoted strings that contain ${...} interpolation patterns.
+ * Claude sometimes writes "text ${EXPR}" (double quotes) instead of
+ * `text ${EXPR}` (backticks). Double-quoted ${} is NOT interpolated in JS
+ * — it renders as the literal characters "${EXPR}", producing wrong CSS values.
  *
- * e.g.:  padding: 16px   →   padding: '16px'
+ * "1px solid ${BORDER}"    →  "1px solid " + BORDER
+ * "${progWidth}%"          →  progWidth + "%"
+ *
+ * Only matches single-line double-quoted strings containing ${...}.
+ * Strings without ${} are left alone (they're correct as-is).
+ */
+function fixDoubleQuotedInterpolations(code: string): string {
+  return code.replace(
+    /"([^"\n]*\$\{[^}]+\}[^"\n]*)"/g,
+    (_match, content: string) => {
+      const parts: string[] = [];
+      const interp = /\$\{([^}]+)\}/g;
+      let lastIndex = 0;
+      let m: RegExpExecArray | null;
+
+      while ((m = interp.exec(content)) !== null) {
+        const lit = content.slice(lastIndex, m.index);
+        if (lit) parts.push(JSON.stringify(lit));
+        parts.push(m[1]);
+        lastIndex = m.index + m[0].length;
+      }
+      const remaining = content.slice(lastIndex);
+      if (remaining) parts.push(JSON.stringify(remaining));
+
+      if (parts.length === 0) return "''";
+      if (parts.length === 1) return parts[0];
+      return parts.join(' + ');
+    }
+  );
+}
+
+// ─── Step 4 ───────────────────────────────────────────────────────────────────
+
+/**
+ * Fixes unescaped apostrophes in single-quoted string literals.
+ * An apostrophe inside a single-quoted string terminates it early,
+ * leaving the rest as unexpected tokens — compile error.
+ *
+ * const TITLE = 'Acme's SaaS'  →  const TITLE = "Acme's SaaS"
+ * value: 'it's done',          →  value: "it's done",
+ *
+ * Strategy: lines with exactly 3 single quotes have exactly one unescaped
+ * apostrophe. Convert the string value to double-quoted (greedy match
+ * captures from first to last quote on the line, spanning the apostrophe).
+ *
+ * Handles both const declarations (= '...') and object properties (: '...').
+ */
+function fixUnescapedApostrophes(code: string): string {
+  return code
+    .split('\n')
+    .map((line) => {
+      if (line.split("'").length - 1 !== 3) return line;
+
+      return line.replace(
+        /^(\s*(?:(?:const|let|var)\s+\w+|\w+)\s*[=:]\s*)'(.*)'([,;]?\s*)$/,
+        (_m, pre, content, end) =>
+          `${pre}"${content.replace(/"/g, '\\"')}"${end}`,
+      );
+    })
+    .join('\n');
+}
+
+// ─── Step 5 ───────────────────────────────────────────────────────────────────
+
+/**
+ * Fixes bare CSS unit values that are not wrapped in quotes.
+ * esbuild sees `padding: 16` then the unexpected token `px`.
+ *
+ * padding: 16px  →  padding: '16px'
+ * fontSize: 24px →  fontSize: '24px'
  */
 function sanitizeUnquotedUnits(code: string): string {
   return code.replace(
@@ -69,42 +149,13 @@ function sanitizeUnquotedUnits(code: string): string {
   );
 }
 
-/**
- * Fixes const/let/var string declarations where an unescaped apostrophe
- * terminates the single-quoted string early.
- *
- * e.g.:  const TITLE = 'Launchpad — Acme's SaaS';
- * →      const TITLE = "Launchpad — Acme's SaaS";
- *
- * Strategy: for any line with exactly 3 single quotes (one opening, one
- * false-close at the apostrophe, one real closing), convert the value
- * from single-quoted to double-quoted so the apostrophe is safe.
- */
-function fixUnescapedApostrophes(code: string): string {
-  return code
-    .split('\n')
-    .map((line) => {
-      // Only touch lines with exactly 3 single quotes — the signature of one
-      // unescaped apostrophe inside an otherwise normal single-quoted string.
-      if (line.split("'").length - 1 !== 3) return line;
-
-      // Match: const/let/var VAR = 'content' (greedy — captures up to LAST quote)
-      return line.replace(
-        /^(\s*(?:const|let|var)\s+\w+\s*=\s*)'(.*)'([,;]?\s*)$/,
-        (_m, pre, content, end) =>
-          `${pre}"${content.replace(/"/g, '\\"')}"${end}`,
-      );
-    })
-    .join('\n');
-}
+// ─── Export ───────────────────────────────────────────────────────────────────
 
 export function sanitizeGeneratedCode(code: string): string {
-  // Step 1: strip fences FIRST — backticks in ``` would corrupt subsequent steps
-  const stripped = stripMarkdownFences(code);
-  // Step 2: convert template literals to string concatenation
-  const noTemplateLiterals = sanitizeTemplateLiterals(stripped);
-  // Step 3: fix unescaped apostrophes in single-quoted string declarations
-  const noApostropheErrors = fixUnescapedApostrophes(noTemplateLiterals);
-  // Step 4: fix any remaining bare CSS unit values
-  return sanitizeUnquotedUnits(noApostropheErrors);
+  const s1 = stripMarkdownFences(code);
+  const s2 = sanitizeTemplateLiterals(s1);
+  const s3 = fixDoubleQuotedInterpolations(s2);
+  const s4 = fixUnescapedApostrophes(s3);
+  const s5 = sanitizeUnquotedUnits(s4);
+  return s5;
 }

@@ -191,6 +191,7 @@ Array.from({ length: 22 }).map((_: unknown, i: number) => {
 - Only UNITLESS numbers are allowed: \`opacity: 0.8\`, \`zIndex: 1\`, \`flex: 1\`
 - Computed CSS values: string concatenation ONLY: \`transform: 'translateY(' + val + 'px)'\`, \`borderBottom: '1px solid ' + BORDER\`
 - NEVER use template literals in style objects — the bundler cannot parse them (this causes render failures)
+- NEVER write \`"text \${expr}"\` — double quotes do NOT interpolate. Use \`'text ' + expr\` instead
 - NEVER write bare CSS like \`16px\` as a JS value — it is a syntax error
 
 ## CRITICAL RULES:
