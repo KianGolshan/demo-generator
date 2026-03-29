@@ -65,7 +65,7 @@ export const DemoVideo: React.FC<DemoVideoProps> = ({ config, screenshotUrls }) 
 
             {scene.type === "browser-flow" && (
               <BrowserFlowScene
-                url={scene.url ?? "localhost:3000"}
+                url={scene.url ?? "example.com"}
                 steps={scene.steps ?? []}
                 headline={scene.headline}
                 overlayText={scene.overlayText}
