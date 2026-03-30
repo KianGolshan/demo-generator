@@ -14,6 +14,9 @@ export default function LandingPage() {
           Demo<span className="text-accent">Forge</span>
         </span>
         <div className="flex items-center gap-3">
+          <Link href="/about" className="btn-ghost text-sm">
+            About
+          </Link>
           <Link href="/login" className="btn-ghost text-sm">
             Sign in
           </Link>
