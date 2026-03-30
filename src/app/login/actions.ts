@@ -5,15 +5,43 @@ import { redirect } from "next/navigation";
 
 /**
  * Initiates GitHub OAuth flow via Supabase Auth.
- * Redirects the user to GitHub's authorization page.
+ * Accepts optional FormData with an `includePrivate` field ("true"/"false")
+ * to request the `repo` scope for private repository access.
  */
-export async function signInWithGitHub() {
+export async function signInWithGitHub(formData?: FormData) {
+  const includePrivate = formData?.get("includePrivate") === "true";
+  const scopes = includePrivate
+    ? "read:user user:email read:org repo"
+    : "read:user user:email read:org";
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
     options: {
       redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
-      scopes: "read:user user:email read:org",
+      scopes,
+    },
+  });
+
+  if (error || !data.url) {
+    redirect("/login?error=oauth_failed");
+  }
+
+  redirect(data.url);
+}
+
+/**
+ * Re-initiates GitHub OAuth with the `repo` scope for private repo access.
+ * Can be called from any page for already-authenticated users who want to
+ * upgrade their GitHub permissions.
+ */
+export async function upgradeToPrivateRepos() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "github",
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      scopes: "read:user user:email read:org repo",
     },
   });
 

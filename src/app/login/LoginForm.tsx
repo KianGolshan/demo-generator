@@ -11,6 +11,7 @@ export function LoginForm() {
   const [emailSent, setEmailSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<"github" | "magic" | null>(null);
+  const [includePrivate, setIncludePrivate] = useState(false);
 
   async function handleMagicLink(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -52,20 +53,37 @@ export function LoginForm() {
     <div className="space-y-4">
       {/* GitHub OAuth */}
       <form action={signInWithGitHub}>
+        <input type="hidden" name="includePrivate" value={includePrivate ? "true" : "false"} />
         <button
           type="submit"
           disabled={loading !== null}
           className="btn-primary w-full py-3 gap-3"
           onClick={() => setLoading("github")}
         >
-          {loading === "github" ? (
-            <Spinner />
-          ) : (
-            <GitHubIcon />
-          )}
+          {loading === "github" ? <Spinner /> : <GitHubIcon />}
           Continue with GitHub
         </button>
       </form>
+
+      {/* Private repo toggle */}
+      <label className="flex items-start gap-2.5 cursor-pointer group">
+        <input
+          type="checkbox"
+          checked={includePrivate}
+          onChange={(e) => setIncludePrivate(e.target.checked)}
+          className="mt-0.5 accent-indigo-500 cursor-pointer"
+        />
+        <div>
+          <span className="text-xs font-mono text-muted-fg group-hover:text-foreground transition-colors">
+            Include private repositories
+          </span>
+          {includePrivate && (
+            <p className="text-xs font-mono text-warning mt-1">
+              This grants read + write access to all your GitHub repos. DemoForge only reads file contents — it never writes to your code.
+            </p>
+          )}
+        </div>
+      </label>
 
       {/* Divider */}
       <div className="flex items-center gap-3">

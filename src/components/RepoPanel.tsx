@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
+import { upgradeToPrivateRepos } from "@/app/login/actions";
 import type { CodeSummary } from "@/types";
 
 type RepoPanelProps = {
@@ -119,6 +120,25 @@ export function RepoPanel({ demoId, codeSummary, hasRepoSourceType }: RepoPanelP
           {errorMsg}
         </div>
       )}
+
+      {/* Private repo access */}
+      <div className="pt-1 border-t border-border">
+        <p className="text-muted-fg text-xs font-mono mb-2">
+          Need to analyze a private repo?
+        </p>
+        <form action={upgradeToPrivateRepos}>
+          <button
+            type="submit"
+            className="text-xs font-mono text-accent hover:underline flex items-center gap-1"
+          >
+            <LockIcon />
+            Grant private repo access
+          </button>
+        </form>
+        <p className="text-muted-fg text-xs font-mono mt-1 opacity-60">
+          Re-authenticates with GitHub&apos;s <code>repo</code> scope. DemoForge only reads file contents — never writes.
+        </p>
+      </div>
     </div>
   );
 }
@@ -227,6 +247,14 @@ function Spinner() {
     <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
     </svg>
   );
 }
