@@ -52,13 +52,12 @@ export function LoginForm() {
   return (
     <div className="space-y-4">
       {/* GitHub OAuth */}
-      <form action={signInWithGitHub}>
+      <form action={signInWithGitHub} onSubmit={() => setLoading("github")}>
         <input type="hidden" name="includePrivate" value={includePrivate ? "true" : "false"} />
         <button
           type="submit"
           disabled={loading !== null}
           className="btn-primary w-full py-3 gap-3"
-          onClick={() => setLoading("github")}
         >
           {loading === "github" ? <Spinner /> : <GitHubIcon />}
           Continue with GitHub
